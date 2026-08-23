@@ -444,7 +444,7 @@ export default function AdminKamar() {
           <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full md:w-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 p-2.5 rounded-xl font-medium outline-none cursor-pointer shadow-sm text-sm">
             <option value="All">Semua Status</option>
             <option value="Available">Tersedia</option>
-            <option value="Booked">Penuh</option>
+            <option value="Booked">Dipesan</option>
             <option value="Renovation">Renovasi</option>
             <option value="Not Available">Tidak Tersedia</option>
           </select>
@@ -479,7 +479,7 @@ export default function AdminKamar() {
                 <div className="flex flex-col gap-2 w-28">
                   <select value={room.status} onChange={(e) => handleStatusChange(room.id, e.target.value)} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-xs font-bold p-2 rounded-lg outline-none cursor-pointer">
                     <option value="Available">🟩 Tersedia</option>
-                    <option value="Booked">🟨 Penuh</option>
+                    <option value="Booked">🟨 Dipesan</option>
                     <option value="Renovation">🟥 Renovasi</option>
                     <option value="Not Available">⬛ Tidak Tersedia</option>
                   </select>
@@ -561,7 +561,7 @@ export default function AdminKamar() {
                     <td className="p-5">
                       <select value={room.status} onChange={(e) => handleStatusChange(room.id, e.target.value)} className="w-full max-w-[150px] bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 text-sm font-bold p-2.5 rounded-xl outline-none cursor-pointer transition-colors">
                         <option value="Available">🟩 Tersedia</option>
-                        <option value="Booked">🟨 Penuh</option>
+                        <option value="Booked">🟨 Dipesan</option>
                         <option value="Renovation">🟥 Renovasi</option>
                         <option value="Not Available">⬛ Tidak Tersedia</option>
                       </select>
@@ -660,7 +660,7 @@ export default function AdminKamar() {
                   <select value={bulkData.status} onChange={(e) => setBulkData({...bulkData, status: e.target.value})} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 font-bold p-3 rounded-xl outline-none cursor-pointer transition-colors text-sm">
                     <option value="">-- Jangan Ubah Status --</option>
                     <option value="Available">🟩 Tersedia</option>
-                    <option value="Booked">🟨 Penuh</option>
+                    <option value="Booked">🟨 Dipesan</option>
                     <option value="Renovation">🟥 Renovasi</option>
                     <option value="Not Available">⬛ Tidak Tersedia</option>
                   </select>

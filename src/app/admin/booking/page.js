@@ -86,8 +86,39 @@ export default function AdminBooking() {
       const [resBookings, resRooms] = await Promise.all([ fetch('/api/booking'), fetch('/api/kamar') ]);
       const dataBookings = await resBookings.json();
       const dataRooms = await resRooms.json();
-      if (Array.isArray(dataBookings)) setBookings(dataBookings);
-      if (Array.isArray(dataRooms)) setRoomsData(dataRooms);
+      
+      if (Array.isArray(dataBookings) && Array.isArray(dataRooms)) {
+        setBookings(dataBookings);
+        setRoomsData(dataRooms);
+
+        // LOGIKA OTOMATIS CHECK-OUT: Cek apakah ada kamar yang tanggal check-out nya sudah lewat
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        for (const booking of dataBookings) {
+          const checkOutDateStr = new Date(booking.endDate || booking.checkOutDate).toISOString().split('T')[0];
+          
+          if (checkOutDateStr < todayStr) {
+            const roomNum = String(booking.roomNumber).trim();
+            const targetRoom = dataRooms.find(r => String(r.number).trim() === roomNum || String(r.number).trim().endsWith(roomNum));
+
+            if (targetRoom && targetRoom.status !== 'Available' && targetRoom.status !== 'Renovation') {
+              await fetch('/api/kamar', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  id: targetRoom.id,
+                  number: targetRoom.number,
+                  floor: targetRoom.floor,
+                  status: 'Available', 
+                  priceMonthly: targetRoom.priceMonthly,
+                  priceDaily: targetRoom.priceDaily,
+                  photoUrl: targetRoom.photoUrl || ''
+                })
+              });
+            }
+          }
+        }
+      }
     } catch (error) {
       showToast("Gagal mengambil data dari server", "error");
     } finally {
@@ -100,11 +131,6 @@ export default function AdminBooking() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     let newValue = value;
-
-    if (name === 'roomNumber') {
-      newValue = newValue.toUpperCase();
-      if (newValue.length > 0 && newValue[0] !== '0') newValue = '0' + newValue;
-    }
 
     let updatedForm = { ...formData, [name]: newValue };
 
@@ -148,7 +174,6 @@ export default function AdminBooking() {
     window.print();
   };
 
-  // Membuka modal CSV
   const handleOpenCsvModal = () => {
     setCsvStartDate('');
     setCsvEndDate('');
@@ -156,11 +181,9 @@ export default function AdminBooking() {
     setIsDialOpen(false);
   };
 
-  // Fungsi Eksekusi Unduh CSV berdasarkan tanggal
   const executeDownloadCSV = () => {
     let dataToDownload = bookings;
 
-    // Filter berdasarkan rentang tanggal masuk (checkInDate) jika tanggal diisi
     if (csvStartDate && csvEndDate) {
       const start = new Date(csvStartDate);
       start.setHours(0, 0, 0, 0);
@@ -233,19 +256,31 @@ export default function AdminBooking() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const inputRoomNumber = formData.roomNumber;
-    const targetRoom = roomsData.find(r => String(r.number).toUpperCase() === inputRoomNumber);
+    const inputRoomNumber = formData.roomNumber.trim();
+    
+    // Validasi pencocokan dengan data kamar master (mendukung pencocokan nomor kamar murni)
+    const targetRoom = roomsData.find(r => {
+      const roomNumStr = String(r.number).trim();
+      return roomNumStr.toUpperCase() === inputRoomNumber.toUpperCase() || roomNumStr.endsWith(inputRoomNumber);
+    });
     
     if (!targetRoom) {
       showToast(`Kamar No. ${inputRoomNumber} tidak ditemukan dalam sistem.`, "error");
       return; 
     }
 
-    if (targetRoom.status === 'Renovation' || targetRoom.status === 'Not Available') {
-      const statusIndo = targetRoom.status === 'Renovation' ? 'sedang DIRENOVASI' : 'DITUTUP';
-      showToast(`Kamar ${inputRoomNumber} saat ini berstatus ${statusIndo}.`, "error");
+    if (!isEditing && targetRoom.status !== 'Available') {
+      showToast(`Kamar ${inputRoomNumber} sedang tidak tersedia (Status: ${targetRoom.status}). Pesanan ditolak.`, "error");
+      return;
+    }
+
+    if (targetRoom.status === 'Renovation') {
+      showToast(`Kamar ${inputRoomNumber} sedang dalam masa renovasi.`, "error");
       return; 
     }
+
+    // Menggunakan inputan murni admin (misal: 101, 201) untuk disimpan ke database booking
+    const finalRoomNumber = inputRoomNumber;
 
     const total = parseFloat(formData.totalAmount) || 0;
     const cash = parseFloat(formData.paidCash) || 0;
@@ -254,6 +289,7 @@ export default function AdminBooking() {
 
     const payload = {
       ...formData,
+      roomNumber: finalRoomNumber,
       totalAmount: total,
       paidCash: cash,
       paidTransfer: transfer,
@@ -264,10 +300,32 @@ export default function AdminBooking() {
     try {
       const res = await fetch('/api/booking', { method: method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const responseData = await res.json();
+      
       if (res.ok) {
+        if (!isEditing) {
+          const todayStr = new Date().toISOString().split('T')[0];
+          const checkInStr = formData.checkInDate; 
+          
+          const newRoomStatus = checkInStr <= todayStr ? 'Not Available' : 'Booked';
+
+          await fetch('/api/kamar', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: targetRoom.id,
+              number: targetRoom.number,
+              floor: targetRoom.floor,
+              status: newRoomStatus, 
+              priceMonthly: targetRoom.priceMonthly,
+              priceDaily: targetRoom.priceDaily,
+              photoUrl: targetRoom.photoUrl || ''
+            })
+          });
+        }
+
         setIsModalOpen(false);
         fetchAllData(); 
-        showToast(`Pesanan berhasil ${isEditing ? 'diperbarui' : 'ditambahkan'}!`, "success");
+        showToast(`Pesanan berhasil ${isEditing ? 'diperbarui' : 'ditambahkan'} & status kamar diperbarui!`, "success");
       } else {
         showToast(responseData.error || "Terjadi kesalahan sistem.", "error");
       }
@@ -284,8 +342,29 @@ export default function AdminBooking() {
     try {
       const res = await fetch('/api/booking', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: bookingToDelete.id }) });
       if (res.ok) {
+        const targetRoom = roomsData.find(r => {
+          const roomNumStr = String(r.number).trim();
+          return roomNumStr === String(bookingToDelete.roomNumber).trim() || roomNumStr.endsWith(String(bookingToDelete.roomNumber).trim());
+        });
+
+        if (targetRoom) {
+          await fetch('/api/kamar', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: targetRoom.id,
+              number: targetRoom.number,
+              floor: targetRoom.floor,
+              status: 'Available',
+              priceMonthly: targetRoom.priceMonthly,
+              priceDaily: targetRoom.priceDaily,
+              photoUrl: targetRoom.photoUrl || ''
+            })
+          });
+        }
+
         fetchAllData();
-        showToast("Data pesanan berhasil dihapus.", "success");
+        showToast("Data pesanan berhasil dihapus & kamar dikosongkan.", "success");
       } else {
         showToast("Gagal menghapus data.", "error");
       }
@@ -471,7 +550,7 @@ export default function AdminBooking() {
               <div key={booking.id} className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <div className="flex justify-between items-start mb-3 pb-3 border-b border-gray-100 dark:border-gray-700/50">
                   <div>
-                    <div className="font-black text-2xl text-gray-800 dark:text-gray-100 leading-none mb-1">{booking.roomNumber}</div>
+                    <div className="font-black text-xl text-gray-800 dark:text-gray-100 leading-none mb-1">Kamar {booking.roomNumber}</div>
                     <div className="text-sm font-medium text-gray-500 dark:text-gray-400">{nameVal}</div>
                   </div>
                   <div className="flex flex-col items-end gap-1">
@@ -550,7 +629,7 @@ export default function AdminBooking() {
                   return (
                     <tr key={booking.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors">
                       <td className="p-5">
-                        <div className="font-black text-xl text-gray-800 dark:text-gray-100">{booking.roomNumber}</div>
+                        <div className="font-black text-xl text-gray-800 dark:text-gray-100">Kamar {booking.roomNumber}</div>
                         <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">{nameVal}</div>
                       </td>
                       <td className="p-5">
@@ -644,8 +723,8 @@ export default function AdminBooking() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3 md:gap-4 items-end">
                   <div>
-                    <label className="block text-[10px] md:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">No. Kamar</label>
-                    <input type="text" name="roomNumber" required value={formData.roomNumber} onChange={handleInputChange} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm md:text-base" placeholder="01"/>
+                    <label className="block text-[10px] md:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">No. Kamar (Misal: 101 atau 201)</label>
+                    <input type="text" name="roomNumber" required value={formData.roomNumber} onChange={handleInputChange} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm md:text-base" placeholder="101"/>
                   </div>
                   <div>
                     <label className="block text-[10px] md:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Nama Penyewa</label>
