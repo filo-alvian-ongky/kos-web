@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Room {
+  id           Int      @id @default(autoincrement())
+  number       String   
+  floor        String
+  priceDaily   Int?
+  priceMonthly Int
+  photoUrl     String   
+  photoUrl2    String?  
+  photoUrl3    String?  
+  status       String
+
+  @@unique([number, floor]) 
+}
+
+model Booking {
+  id            Int      @id @default(autoincrement())
+  tenantName    String
+  roomNumber    String
+  startDate     DateTime
+  endDate       DateTime
+  totalAmount   Float    @default(0) 
+  paidCash      Float    @default(0) 
+  paidTransfer  Float    @default(0) 
+  status        String   @default("Belum Lunas")
+  createdAt     DateTime @default(now())
+}
+
+model SiteContent {
+  id Int @id @default(autoincrement())
+  key String @unique
+  value String
+}
+
+model Admin {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String  
+  createdAt DateTime @default(now())
+}

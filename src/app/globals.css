@@ -1,8 +1,17 @@
 @import "tailwindcss";
 
+/* Mengizinkan Tailwind membaca class .dark dari tombol manual kita */
+@variant dark (&:is(.dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f2f4f7;
+  --foreground: #111827; /* gray-900 */
+}
+
+/* Mengikat warna variabel ke class .dark, BUKAN ke preferensi sistem */
+.dark, :root.dark {
+  --background: #030712; /* gray-950 */
+  --foreground: #ffffff;
 }
 
 @theme inline {
@@ -12,15 +21,15 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Memaksa scrollbar agar tidak ada glitch saat pindah halaman */
+html {
+  overflow-y: scroll;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  /* Transisi mulus saat tombol tema diklik */
+  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
 }
