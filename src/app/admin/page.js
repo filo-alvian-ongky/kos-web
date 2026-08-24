@@ -37,6 +37,9 @@ export default function AdminAuth() {
   const [password, setPassword] = useState('');
   const [secretCode, setSecretCode] = useState('');
   
+  // State Honeypot (Jebakan Bot Anti-Spam)
+  const [websiteUrl, setWebsiteUrl] = useState('');
+  
   // State untuk visibilitas password
   const [showPassword, setShowPassword] = useState(false);
   const [showSecretCode, setShowSecretCode] = useState(false);
@@ -77,7 +80,7 @@ export default function AdminAuth() {
         const res = await fetch('/api/auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
+          body: JSON.stringify({ username, password, websiteUrl }) // Dikirim dengan field honeypot
         });
 
         const data = await res.json();
@@ -100,7 +103,7 @@ export default function AdminAuth() {
         const res = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password, secretCode })
+          body: JSON.stringify({ username, password, secretCode, websiteUrl }) // Dikirim dengan field honeypot
         });
 
         const data = await res.json();
@@ -110,6 +113,7 @@ export default function AdminAuth() {
           setIsLoading(false);
           setPassword('');
           setSecretCode('');
+          setWebsiteUrl('');
           setTimeout(() => {
             setIsLoginMode(true);
             setSuccessMsg('');
@@ -151,7 +155,7 @@ export default function AdminAuth() {
       <div className="w-full max-w-md mx-auto my-auto py-8">
         <div className="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-300">
           
-          {/* Logo Garuda menggantikan emoji */}
+          {/* Logo Garuda */}
           <div className="w-20 h-20 rounded-2xl bg-gray-50 dark:bg-gray-900/60 flex items-center justify-center mb-6 mx-auto shadow-inner border border-gray-100 dark:border-gray-800 p-2">
             <GarudaLogo className="w-14 h-auto" />
           </div>
@@ -205,6 +209,19 @@ export default function AdminAuth() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            
+            {/* FIELD HONEYPOT (Sembunyi, tidak terlihat manusia tetapi diisi Bot) */}
+            <div className="hidden" aria-hidden="true">
+              <input
+                type="text"
+                name="websiteUrl"
+                value={websiteUrl}
+                onChange={(e) => setWebsiteUrl(e.target.value)}
+                tabIndex={-1}
+                autoComplete="off"
+              />
+            </div>
+
             <div>
               <label className="block text-[10px] md:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Username</label>
               <input

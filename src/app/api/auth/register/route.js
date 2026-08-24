@@ -10,7 +10,15 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 export async function POST(request) {
   try {
-    const { username, password, secretCode } = await request.json();
+    const { username, password, secretCode, websiteUrl } = await request.json();
+
+    // 0. JEBAKAN BOT (Honeypot): Kirim respons 201 seolah-olah berhasil, TANPA menyimpan data ke database
+    if (websiteUrl) {
+      return NextResponse.json(
+        { message: 'Registrasi berhasil!', username: 'admin' },
+        { status: 201 }
+      );
+    }
 
     // 1. Validasi Kode Rahasia untuk mencegah Bot/Hijacking registrasi
     if (secretCode !== process.env.ADMIN_SECRET_CODE) {

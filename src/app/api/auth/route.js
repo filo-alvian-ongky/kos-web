@@ -10,7 +10,16 @@ if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
 export async function POST(request) {
   try {
-    const { username, password } = await request.json();
+    // 1. Ambil websiteUrl (field jebakan bot) dari request body
+    const { username, password, websiteUrl } = await request.json();
+
+    // 2. JEBAKAN BOT: Kirim respons 200 seolah-olah sukses, tetapi TANPA memberikan cookie admin_token
+    if (websiteUrl) {
+      return NextResponse.json(
+        { message: 'Login berhasil!', username: 'admin' },
+        { status: 200 }
+      );
+    }
 
     if (!username || !password) {
       return NextResponse.json({ error: 'Username dan password wajib diisi.' }, { status: 400 });
