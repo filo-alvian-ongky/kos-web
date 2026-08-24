@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "app.vercel.garudakostel.twa",
+      "sha256_cert_fingerprints": [
+        "E8:38:14:6A:08:0C:07:5E:C3:7E:43:1C:71:29:76:52:A7:87:89:2F:58:0F:1A:67:D7:59:BE:BF:1D:CE:98:81"
+      ]
+    }
+  }
+]
