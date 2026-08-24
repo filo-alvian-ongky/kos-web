@@ -35,13 +35,15 @@ export default function AdminAuth() {
   // State Form
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [secretCode, setSecretCode] = useState('');
   
   // State Honeypot (Jebakan Bot Anti-Spam)
   const [websiteUrl, setWebsiteUrl] = useState('');
   
-  // State untuk visibilitas password
+  // State Visibilitas Password
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showSecretCode, setShowSecretCode] = useState(false);
 
   const [errorMsg, setErrorMsg] = useState('');
@@ -69,6 +71,38 @@ export default function AdminAuth() {
     else document.documentElement.classList.remove('dark');
   };
 
+  // Reset form dan alih mode
+  const switchMode = (toLogin) => {
+    setIsLoginMode(toLogin);
+    setErrorMsg('');
+    setSuccessMsg('');
+    setUsername('');
+    setPassword('');
+    setConfirmPassword('');
+    setSecretCode('');
+    setWebsiteUrl('');
+  };
+
+  // Fungsi Validasi Kompleksitas Password
+  const validatePasswordComplexity = (pass) => {
+    if (pass.length < 8) {
+      return 'Password minimal harus 8 karakter!';
+    }
+    if (!/[A-Z]/.test(pass)) {
+      return 'Password harus mengandung setidaknya 1 huruf besar (A-Z)!';
+    }
+    if (!/[a-z]/.test(pass)) {
+      return 'Password harus mengandung setidaknya 1 huruf kecil (a-z)!';
+    }
+    if (!/[0-9]/.test(pass)) {
+      return 'Password harus mengandung setidaknya 1 angka (0-9)!';
+    }
+    if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(pass)) {
+      return 'Password harus mengandung setidaknya 1 karakter khusus/simbol (!@#$%^&*)!';
+    }
+    return null;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
@@ -80,7 +114,7 @@ export default function AdminAuth() {
         const res = await fetch('/api/auth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password, websiteUrl }) // Dikirim dengan field honeypot
+          body: JSON.stringify({ username, password, websiteUrl })
         });
 
         const data = await res.json();
@@ -88,8 +122,7 @@ export default function AdminAuth() {
         if (res.ok) {
           const formattedName = username.charAt(0).toUpperCase() + username.slice(1);
           localStorage.setItem('adminName', formattedName);
-          
-          window.location.href = '/admin/dashboard';
+          router.push('/admin/dashboard');
         } else {
           setErrorMsg(data.error || 'Username atau password salah!');
           setIsLoading(false);
@@ -99,11 +132,26 @@ export default function AdminAuth() {
         setIsLoading(false);
       }
     } else {
+      // 1. Validasi Kompleksitas Password
+      const passwordError = validatePasswordComplexity(password);
+      if (passwordError) {
+        setErrorMsg(passwordError);
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. Validasi Kecocokan Password
+      if (password !== confirmPassword) {
+        setErrorMsg('Password dan konfirmasi password tidak cocok!');
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const res = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password, secretCode, websiteUrl }) // Dikirim dengan field honeypot
+          body: JSON.stringify({ username, password, secretCode, websiteUrl })
         });
 
         const data = await res.json();
@@ -112,11 +160,11 @@ export default function AdminAuth() {
           setSuccessMsg('Akun berhasil dibuat! Silakan masuk.');
           setIsLoading(false);
           setPassword('');
+          setConfirmPassword('');
           setSecretCode('');
           setWebsiteUrl('');
           setTimeout(() => {
-            setIsLoginMode(true);
-            setSuccessMsg('');
+            switchMode(true);
           }, 1500);
         } else {
           setErrorMsg(data.error || 'Gagal melakukan registrasi.');
@@ -177,7 +225,7 @@ export default function AdminAuth() {
 
             <button
               type="button"
-              onClick={() => { setIsLoginMode(true); setErrorMsg(''); setSuccessMsg(''); }}
+              onClick={() => switchMode(true)}
               className={`relative z-10 flex-1 py-2.5 rounded-xl font-bold text-xs md:text-sm transition-colors duration-300 ${
                 isLoginMode ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
@@ -187,7 +235,7 @@ export default function AdminAuth() {
 
             <button
               type="button"
-              onClick={() => { setIsLoginMode(false); setErrorMsg(''); setSuccessMsg(''); }}
+              onClick={() => switchMode(false)}
               className={`relative z-10 flex-1 py-2.5 rounded-xl font-bold text-xs md:text-sm transition-colors duration-300 ${
                 !isLoginMode ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
@@ -210,7 +258,7 @@ export default function AdminAuth() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             
-            {/* FIELD HONEYPOT (Sembunyi, tidak terlihat manusia tetapi diisi Bot) */}
+            {/* FIELD HONEYPOT */}
             <div className="hidden" aria-hidden="true">
               <input
                 type="text"
@@ -225,7 +273,9 @@ export default function AdminAuth() {
             <div>
               <label className="block text-[10px] md:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Username</label>
               <input
-                type="text" required
+                type="text" 
+                required
+                autoComplete="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3.5 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm md:text-base transition-colors"
@@ -237,11 +287,13 @@ export default function AdminAuth() {
               <label className="block text-[10px] md:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Password</label>
               <div className="relative">
                 <input
-                  type={showPassword ? 'text' : 'password'} required
+                  type={showPassword ? 'text' : 'password'} 
+                  required
+                  autoComplete={isLoginMode ? 'current-password' : 'new-password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3.5 pr-12 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm md:text-base transition-colors"
-                  placeholder="••••••••"
+                  placeholder="Masukkan password"
                 />
                 <button
                   type="button"
@@ -261,13 +313,54 @@ export default function AdminAuth() {
                   )}
                 </button>
               </div>
+              {!isLoginMode && (
+                <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1.5 leading-tight">
+                  *Min. 8 karakter, kombinasi huruf besar, kecil, angka, & simbol.
+                </p>
+              )}
             </div>
 
+            {/* FIELD KONFIRMASI PASSWORD (Khusus Mode Registrasi) */}
+            <div className={`transition-all duration-300 ease-in-out origin-top ${!isLoginMode ? 'opacity-100 max-h-32 mt-4' : 'opacity-0 max-h-0 m-0 overflow-hidden pointer-events-none'}`}>
+              <label className="block text-[10px] md:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Konfirmasi Password</label>
+              <div className="relative">
+                <input
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  required={!isLoginMode}
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3.5 pr-12 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm md:text-base transition-colors"
+                  placeholder="Ulangi password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none select-none p-1 transition-colors"
+                  title={showConfirmPassword ? "Sembunyikan password" : "Lihat password"}
+                >
+                  {showConfirmPassword ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* KODE RAHASIA ADMIN (Khusus Mode Registrasi) */}
             <div className={`transition-all duration-300 ease-in-out origin-top ${!isLoginMode ? 'opacity-100 max-h-32 mt-4' : 'opacity-0 max-h-0 m-0 overflow-hidden pointer-events-none'}`}>
               <label className="block text-[10px] md:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Kode Rahasia Admin</label>
               <div className="relative">
                 <input
-                  type={showSecretCode ? 'text' : 'password'} required={!isLoginMode}
+                  type={showSecretCode ? 'text' : 'password'} 
+                  required={!isLoginMode}
+                  autoComplete="off"
                   value={secretCode}
                   onChange={(e) => setSecretCode(e.target.value)}
                   className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3.5 pr-12 rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm md:text-base transition-colors"
