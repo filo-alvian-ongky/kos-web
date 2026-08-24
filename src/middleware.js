@@ -1,54 +1,50 @@
 import { NextResponse } from 'next/server';
 
 export function middleware(request) {
-  // Mengambil nilai token dari cookies
   const token = request.cookies.get('admin_token')?.value;
   const { pathname } = request.nextUrl;
 
-  // ==========================================
-  // 1. PENGAMANAN HALAMAN UI ADMIN
-  // ==========================================
-  // Jika mencoba mengakses folder /admin/ (seperti /admin/dashboard atau /admin/kamar)
-  // tapi bukan halaman login utama (/admin), dan tidak punya token:
-  if (pathname.startsWith('/admin/') && pathname !== '/admin') {
-    if (!token) {
-      const url = request.nextUrl.clone();
-      url.pathname = '/admin'; // Tendang kembali ke halaman login
-      return NextResponse.redirect(url);
-    }
+  // 1. REDIRECT JIKA SUDAH LOGIN
+  // Jika sudah punya token dan mencoba buka halaman login (/admin), lempar ke dashboard
+  if (pathname === '/admin' && token) {
+    return NextResponse.redirect(new URL('/admin/dashboard', request.url));
   }
 
-  // ==========================================
-  // 2. PENGAMANAN JALUR BELAKANG (API ROUTE)
-  // ==========================================
+  // 2. PENGAMANAN HALAMAN ADMIN
+  // Proteksi semua halaman di dalam /admin/... kecuali halaman login (/admin)
+  if (pathname.startsWith('/admin/') && !token) {
+    return NextResponse.redirect(new URL('/admin', request.url));
+  }
+
+  // 3. PENGAMANAN API ADMIN SENSITIF (Termasuk method GET)
+  // Semua API khusus admin di bawah /api/admin/* wajib memiliki token
+  if (pathname.startsWith('/api/admin') && !token) {
+    return NextResponse.json(
+      { error: 'Akses ditolak. Akses khusus admin.' },
+      { status: 401 }
+    );
+  }
+
+  // 4. PENGAMANAN API UMUM (POST, PUT, DELETE)
+  // Mengunci perubahan database di API publik kecuali rute /api/auth
   if (pathname.startsWith('/api/')) {
     const method = request.method;
-    
-    // Metode POST, PUT, DELETE adalah metode untuk merubah database. 
-    // Wajib diblokir jika tidak ada token!
-    if (['POST', 'PUT', 'DELETE'].includes(method)) {
-      
-      // Pengecualian: Biarkan API Auth (Login/Logout) tetap bisa diakses tanpa token
-      if (!pathname.startsWith('/api/auth') && !token) {
+    if (['POST', 'PUT', 'DELETE'].includes(method) && !pathname.startsWith('/api/auth')) {
+      if (!token) {
         return NextResponse.json(
-          { error: 'Akses ditolak. Anda tidak memiliki izin Admin.' },
+          { error: 'Akses ditolak. Anda tidak memiliki izin.' },
           { status: 401 }
         );
       }
     }
-    
-    // Metode GET dibiarkan lewat tanpa token, 
-    // agar pengunjung website tetap bisa melihat daftar kamar dan konten di halaman utama.
   }
 
-  // Jika lolos semua pemeriksaan, izinkan lewat
   return NextResponse.next();
 }
 
-// Menentukan rute mana saja yang akan dijaga oleh Middleware ini
 export const config = {
   matcher: [
-    '/admin/:path*', // Jaga semua halaman di dalam /admin
-    '/api/:path*'    // Jaga semua jalur API
+    '/admin/:path*',
+    '/api/:path*'
   ],
 };
