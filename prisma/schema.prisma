@@ -17,9 +17,9 @@ model Room {
   id           Int      @id @default(autoincrement())
   number       String   
   floor        String
-  type         String   @default("Kamar Standar")
-  priceDaily   Int?
-  priceMonthly Int
+  type         String   @default("Standard Double Bed")
+  priceDaily   Int     
+  priceMonthly Int?
   photoUrl     String   
   photoUrl2    String?  
   photoUrl3    String?  

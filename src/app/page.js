@@ -22,11 +22,9 @@ export default function Home() {
         if (resRooms.ok) {
           const dataRooms = await resRooms.json();
           if (Array.isArray(dataRooms)) {
-            // Mengelompokkan kamar berdasarkan Tipe untuk ditampilkan secara publik (Tanpa status ketersediaan)
             const grouped = {};
             dataRooms.forEach(room => {
-              // Jika tipe tidak ada, default ke Standard Room
-              const typeName = room.type || 'Standard Room';
+              const typeName = room.type || 'Standard Double Bed';
               
               if (!grouped[typeName]) {
                 grouped[typeName] = {
@@ -36,7 +34,6 @@ export default function Home() {
                   photoUrl: room.photoUrl || ''
                 };
               }
-              // Cari harga termurah untuk ditampilkan sebagai "Mulai dari"
               if (room.priceMonthly > 0 && (grouped[typeName].minPriceMonthly === 0 || room.priceMonthly < grouped[typeName].minPriceMonthly)) {
                 grouped[typeName].minPriceMonthly = room.priceMonthly;
               }
@@ -45,8 +42,15 @@ export default function Home() {
               }
             });
 
-            // Ubah object menjadi array agar bisa di-map
-            setRoomTypes(Object.values(grouped));
+            // LOGIKA PENGURUTAN (SORTING) BARU: Harga Termahal di Atas!
+            // Tujuannya agar "Family Room" jadi Hero Card (Bintang Utama) di paling atas
+            const sortedTypes = Object.values(grouped).sort((a, b) => {
+              const priceA = a.minPriceMonthly > 0 ? a.minPriceMonthly : (a.minPriceDaily * 30);
+              const priceB = b.minPriceMonthly > 0 ? b.minPriceMonthly : (b.minPriceDaily * 30);
+              return priceB - priceA; // Menurun (Descending)
+            });
+
+            setRoomTypes(sortedTypes);
           }
         }
       } catch (error) {
@@ -109,7 +113,6 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 animate-pulse min-h-[100vh]">
           <div className="w-3/4 md:w-1/2 h-12 md:h-16 bg-gray-200 dark:bg-gray-800 rounded-2xl mb-6 mt-10"></div>
           <div className="w-full md:w-2/3 h-6 bg-gray-200 dark:bg-gray-800 rounded-xl mb-4"></div>
-          <div className="w-4/5 md:w-1/2 h-6 bg-gray-200 dark:bg-gray-800 rounded-xl mb-12"></div>
         </div>
       </PublicWrapper>
     );
@@ -137,10 +140,10 @@ export default function Home() {
               {heroSubtitle}
             </p>
             <div className="flex flex-wrap gap-4">
-              <Link href="/kamar" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-full shadow-xl shadow-blue-500/30 transition-all active:scale-95">
+              <Link href="/kamar" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-full shadow-xl shadow-blue-500/30 transition-all hover:scale-105 active:scale-95">
                 Lihat Pilihan Kamar
               </Link>
-              <Link href="/lokasi" className="bg-white dark:bg-gray-800 text-gray-800 dark:text-white border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 font-bold py-4 px-8 rounded-full shadow-sm transition-all active:scale-95">
+              <Link href="/lokasi" className="bg-white dark:bg-gray-800 text-gray-800 dark:text-white border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 font-bold py-4 px-8 rounded-full shadow-sm transition-all hover:scale-105 active:scale-95">
                 Cek Lokasi
               </Link>
             </div>
@@ -189,7 +192,7 @@ export default function Home() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.1, duration: 0.5 }}
-                  className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-3xl flex flex-col items-center justify-center text-center"
+                  className="bg-gray-50 dark:bg-gray-900/50 p-6 rounded-3xl flex flex-col items-center justify-center text-center transition-transform hover:scale-105"
                 >
                   {item.icon}
                   <span className="font-bold text-gray-800 dark:text-gray-200 text-sm">{item.label}</span>
@@ -200,72 +203,116 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* PREVIEW KELOMPOK TIPE KAMAR (TANPA STATUS KETERSEDIAAN) */}
+      {/* KATALOG TIPE KAMAR (EDITORIAL GRAND SHOWCASE) */}
       <section className="max-w-7xl mx-auto px-6 overflow-hidden mb-24">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="flex justify-between items-end mb-8"
+          className="flex flex-col md:flex-row justify-between items-start md:items-end mb-10 gap-4"
         >
           <div>
-            <h2 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white">Pilihan Tipe Kamar</h2>
-            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Katalog kategori dan fasilitas kamar</p>
+            <div className="text-blue-600 dark:text-blue-400 font-bold text-xs uppercase tracking-widest mb-2">Katalog Eksklusif</div>
+            <h2 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white">Pilihan Tipe Kamar</h2>
           </div>
-          <Link href="/kamar" className="hidden md:flex text-blue-600 dark:text-blue-400 font-bold items-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 px-5 py-2.5 rounded-full transition-all active:scale-95">
-            Lihat Detail <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"></path></svg>
+          <Link href="/kamar" className="text-blue-600 dark:text-blue-400 font-bold items-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 px-6 py-3 rounded-full transition-all active:scale-95 inline-flex border border-blue-100 dark:border-blue-900/50">
+            Lihat Semua Kamar <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"></path></svg>
           </Link>
         </motion.div>
 
         {roomTypes.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {roomTypes.map((group, index) => (
-              <motion.div 
-                key={index}
-                initial={{ opacity: 0, y: 40 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ delay: index * 0.15, duration: 0.5, ease: "easeOut" }}
-                className="bg-white dark:bg-gray-800 rounded-[2.5rem] overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700 group flex flex-col sm:flex-row"
-              >
-                <div className="relative w-full sm:w-1/2 h-56 sm:h-auto bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                  {group.photoUrl ? (
-                    <img src={group.photoUrl} alt={group.typeName} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold">Foto Tipe Kamar</div>
-                  )}
-                </div>
-                
-                <div className="p-6 sm:p-8 flex flex-col flex-grow justify-between sm:w-1/2">
-                  <div>
-                    <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2">{group.typeName}</h3>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">Fasilitas eksklusif lengkap dengan AC & kamar mandi dalam.</p>
-                    <div className="space-y-1 mb-6">
-                      <p className="text-gray-400 text-[10px] uppercase font-bold tracking-wider">Mulai dari</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+            {roomTypes.map((group, index) => {
+              // Menentukan apakah ini kartu pertama (Hero Card)
+              const isHero = index === 0;
+
+              return (
+                <motion.div 
+                  key={index}
+                  initial={{ opacity: 0, y: 40 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-50px" }}
+                  transition={{ delay: index * 0.15, duration: 0.6, ease: "easeOut" }}
+                  className={`bg-white dark:bg-gray-800 rounded-[3rem] overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-blue-900/10 border border-gray-100 dark:border-gray-700 group flex transition-all duration-500 hover:-translate-y-1 ${
+                    isHero 
+                      ? 'md:col-span-2 flex-col md:flex-row' // Hero Card: Lebar penuh, bentuk horizontal di desktop
+                      : 'md:col-span-1 flex-col' // Standard Card: Lebar 1 kolom, bentuk vertikal
+                  }`}
+                >
+                  {/* Foto Container */}
+                  <div className={`relative bg-gray-200 dark:bg-gray-700 overflow-hidden ${
+                    isHero ? 'w-full md:w-3/5 h-64 md:h-auto md:min-h-[360px]' : 'w-full h-56 md:h-64'
+                  }`}>
+                    {group.photoUrl ? (
+                      <img src={group.photoUrl} alt={group.typeName} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"/>
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 font-bold bg-gray-100 dark:bg-gray-800">
+                        <span className="text-4xl mb-2 opacity-50">📸</span>
+                        <span>Foto Segera Hadir</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80"></div>
+                    
+                    {/* Badge eksklusif untuk Hero Card (Vektor Sparkle sejajar) */}
+                    {isHero && (
+                      <div className="absolute top-6 left-6 bg-black/50 backdrop-blur-md text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full border border-white/20 flex items-center gap-1.5">
+                        Most Popular
+                        <svg className="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                      </div>
+                    )}
+                    
+                    {/* Nama Tipe di Atas Foto */}
+                    <div className="absolute bottom-6 left-6 right-6">
+                      <h3 className="text-3xl md:text-4xl font-black text-white leading-tight shadow-sm drop-shadow-md">
+                        {group.typeName}
+                      </h3>
+                    </div>
+                  </div>
+                  
+                  {/* Info Container */}
+                  <div className={`p-6 sm:p-8 flex flex-col justify-center ${
+                    isHero ? 'w-full md:w-2/5' : 'w-full flex-grow'
+                  }`}>
+                    <div className="mb-auto">
+                      <h3 className={`${isHero ? 'text-3xl' : 'text-2xl'} font-black text-gray-900 dark:text-white mb-2 leading-tight hidden`}>{group.typeName}</h3>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm mb-6 line-clamp-2">
+                        {isHero ? 'Tipe kamar paling eksklusif dengan ruang yang lebih luas dan fasilitas premium yang dirancang khusus untuk kenyamanan maksimal Anda.' : 'Fasilitas eksklusif lengkap dengan AC & kamar mandi dalam untuk kenyamanan istirahat Anda.'}
+                      </p>
+                    </div>
+
+                    <div className="mt-4">
+                      <p className="text-gray-400 text-[10px] uppercase font-bold tracking-wider mb-2">Mulai dari</p>
                       
                       {group.minPriceMonthly > 0 ? (
-                        <div className="flex items-end gap-2">
-                          <span className="text-2xl font-black text-blue-600 dark:text-blue-400">{formatRupiah(group.minPriceMonthly)}</span>
+                        <div className="flex items-end gap-2 mb-6">
+                          <span className={`${isHero ? 'text-3xl lg:text-4xl' : 'text-2xl'} font-black text-blue-600 dark:text-blue-400 leading-none`}>{formatRupiah(group.minPriceMonthly)}</span>
                           <span className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">/ bulan</span>
                         </div>
                       ) : (
-                        <div className="flex items-end gap-2">
-                          <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{formatRupiah(group.minPriceDaily)}</span>
+                        <div className="flex items-end gap-2 mb-6">
+                          <span className={`${isHero ? 'text-3xl lg:text-4xl' : 'text-2xl'} font-black text-indigo-600 dark:text-indigo-400 leading-none`}>{formatRupiah(group.minPriceDaily)}</span>
                           <span className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">/ hari</span>
                         </div>
                       )}
 
+                      <Link href="/kamar" className={`block w-full text-center font-bold py-3.5 rounded-2xl transition-all duration-300 active:scale-95 ${
+                        isHero 
+                          ? 'bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/30' 
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}>
+                        Lihat Detail Kamar
+                      </Link>
                     </div>
                   </div>
-                  <Link href="/kamar" className="block w-full text-center bg-gray-100 dark:bg-gray-700 hover:bg-blue-600 hover:text-white text-gray-800 dark:text-gray-200 font-bold py-3.5 rounded-2xl transition-all duration-300 active:scale-95">Lihat Detail</Link>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </div>
         ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] p-12 text-center border border-gray-100 dark:border-gray-700">
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Belum ada tipe kamar terdaftar</h3>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Silakan cek kembali secara berkala.</p>
+          <div className="bg-white dark:bg-gray-800 rounded-[3rem] p-16 text-center border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col items-center">
+            <span className="text-6xl mb-4">🏠</span>
+            <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2">Belum ada tipe kamar</h3>
+            <p className="text-gray-500 dark:text-gray-400">Silakan kembali lagi nanti untuk melihat katalog kamar kami.</p>
           </div>
         )}
       </section>

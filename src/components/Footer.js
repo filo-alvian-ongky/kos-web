@@ -2,6 +2,32 @@
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 
+// Vektor Logo Garuda Kostel (Konsisten dengan Navbar)
+const GarudaLogo = ({ className = "w-10 h-auto" }) => (
+  <svg viewBox="0 0 125 80" className={className} xmlns="http://www.w3.org/2000/svg">
+    <g>
+      {/* Sayap Kiri */}
+      <path d="M40 32 C25 32 15 26 5 19 C15 29 25 36 40 37 Z" className="fill-gray-900 dark:fill-white" />
+      <path d="M40 44 C25 44 15 40 5 36 C15 44 25 48 40 49 Z" className="fill-gray-900 dark:fill-white" />
+      <path d="M40 56 C25 56 15 54 5 53 C15 59 25 60 40 61 Z" className="fill-gray-900 dark:fill-white" />
+      
+      {/* Sayap Kanan */}
+      <path d="M85 32 C100 32 110 26 120 19 C110 29 100 36 85 37 Z" className="fill-gray-900 dark:fill-white" />
+      <path d="M85 44 C100 44 110 40 120 36 C110 44 100 48 85 49 Z" className="fill-gray-900 dark:fill-white" />
+      <path d="M85 56 C100 56 110 54 120 53 C110 59 100 60 85 61 Z" className="fill-gray-900 dark:fill-white" />
+      
+      {/* Atap & Cerobong */}
+      <rect x="73" y="12" width="6" height="12" className="fill-gray-500 dark:fill-gray-400" />
+      <path d="M 35 30 L 62.5 10 L 90 30 H 82 L 62.5 16 L 43 30 Z" className="fill-gray-500 dark:fill-gray-400" />
+      
+      {/* Kotak Merah & Huruf GK */}
+      <rect x="40" y="25" width="45" height="38" rx="6" className="fill-red-600 dark:fill-red-500" />
+      <path d="M 46 33 H 56 V 37 H 50 V 51 H 58 V 45 H 54 V 41 H 62 V 55 H 46 Z" fill="#FFFFFF" />
+      <path d="M 61 33 H 65 V 42 L 72 33 H 78 L 69 43 L 79 55 H 72 L 65 46 V 55 H 61 Z" fill="#FFFFFF" />
+    </g>
+  </svg>
+);
+
 export default function Footer() {
   const currentYear = new Date().getFullYear();
   const [settings, setSettings] = useState({ 
@@ -37,10 +63,11 @@ export default function Footer() {
           
           {/* Kolom Logo & Deskripsi */}
           <div className="text-center md:text-left flex-1">
-            <Link href="/" className="inline-flex items-center gap-3 mb-5 group active:scale-95 transition-all duration-300">
-              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-black text-base uppercase shadow-md transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6">
-                {settings.kosName ? settings.kosName.charAt(0) : 'G'}
-              </div>
+            <Link href="/" className="inline-flex flex-col md:flex-row items-center gap-3 md:gap-4 mb-5 group active:scale-95 transition-all duration-300">
+              
+              {/* Logo Vektor di Footer */}
+              <GarudaLogo className="w-16 md:w-14 h-auto shrink-0 drop-shadow-sm transition-transform duration-500 group-hover:scale-110 group-hover:-rotate-3" />
+              
               <span className="font-black text-2xl tracking-tight text-gray-900 dark:text-white transition-colors duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400">
                 {settings.kosName}
               </span>

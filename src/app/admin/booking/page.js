@@ -286,7 +286,6 @@ export default function AdminBooking() {
     const computedStatus = (cash + transfer) >= total ? 'Lunas' : 'Belum Lunas';
 
     // PENYISIPAN JAM CHECK-IN (14:00) DAN CHECK-OUT (12:00)
-    // Supaya API menerima format ISO yang lengkap dengan jamnya
     const finalCheckInDateTime = new Date(`${formData.checkInDate}T14:00:00+07:00`).toISOString();
     const finalCheckOutDateTime = new Date(`${formData.checkOutDate}T12:00:00+07:00`).toISOString();
 
@@ -401,6 +400,12 @@ export default function AdminBooking() {
   const modalCash = parseFloat(formData.paidCash) || 0;
   const modalTransfer = parseFloat(formData.paidTransfer) || 0;
   const modalShortage = modalTotal - (modalCash + modalTransfer);
+
+  // FUNGSI PENCARI TIPE KAMAR UNTUK NOTA PDF
+  const getRoomTypeForReceipt = (roomNum) => {
+    const target = roomsData.find(r => String(r.number).trim() === String(roomNum).trim() || String(r.number).trim().endsWith(String(roomNum).trim()));
+    return target?.type || 'Standard Double Bed';
+  };
 
   if (isLoading) {
     return (
@@ -551,11 +556,20 @@ export default function AdminBooking() {
             const statusVal = booking.status || booking.paymentStatus || 'Belum Lunas';
             const nameVal = booking.tenantName || booking.guestName || '-';
 
+            // Menemukan Tipe Kamar
+            const targetRoomInfo = roomsData.find(r => {
+              const roomNumStr = String(r.number).trim();
+              const bookingRoomNumStr = String(booking.roomNumber).trim();
+              return roomNumStr === bookingRoomNumStr || roomNumStr.endsWith(bookingRoomNumStr);
+            });
+            const roomTypeDisplay = targetRoomInfo?.type || 'Standard Double Bed';
+
             return (
               <div key={booking.id} className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
                 <div className="flex justify-between items-start mb-3 pb-3 border-b border-gray-100 dark:border-gray-700/50">
                   <div>
                     <div className="font-black text-xl text-gray-800 dark:text-gray-100 leading-none mb-1">Kamar {booking.roomNumber}</div>
+                    <div className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mb-1">{roomTypeDisplay}</div>
                     <div className="text-sm font-medium text-gray-500 dark:text-gray-400">{nameVal}</div>
                   </div>
                   <div className="flex flex-col items-end gap-1">
@@ -637,10 +651,19 @@ export default function AdminBooking() {
                   const statusVal = booking.status || booking.paymentStatus || 'Belum Lunas';
                   const nameVal = booking.tenantName || booking.guestName || '-';
 
+                  // Menemukan Tipe Kamar
+                  const targetRoomInfo = roomsData.find(r => {
+                    const roomNumStr = String(r.number).trim();
+                    const bookingRoomNumStr = String(booking.roomNumber).trim();
+                    return roomNumStr === bookingRoomNumStr || roomNumStr.endsWith(bookingRoomNumStr);
+                  });
+                  const roomTypeDisplay = targetRoomInfo?.type || 'Standard Double Bed';
+
                   return (
                     <tr key={booking.id} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/30 transition-colors">
                       <td className="p-5">
                         <div className="font-black text-xl text-gray-800 dark:text-gray-100">Kamar {booking.roomNumber}</div>
+                        <div className="text-[10px] font-bold text-blue-600 dark:text-blue-400 mt-1 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-0.5 rounded-md inline-block">{roomTypeDisplay}</div>
                         <div className="text-sm font-medium text-gray-500 dark:text-gray-400 mt-1">{nameVal}</div>
                       </td>
                       <td className="p-5">
@@ -805,95 +828,106 @@ export default function AdminBooking() {
         </div>
       )}
 
-      {/* Modal Cetak Nota / Bukti Pembayaran */}
-      {isReceiptModalOpen && selectedBookingForReceipt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl p-6 md:p-8 relative border border-gray-100 dark:border-gray-800">
-            
-            <button 
-              onClick={() => setIsReceiptModalOpen(false)} 
-              className="absolute top-4 right-4 bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 w-8 h-8 rounded-full flex items-center justify-center font-bold print:hidden transition-all duration-200 active:scale-90"
-            >
-              ✕
-            </button>
+      {/* Fungsi Pembantu untuk Modal Nota PDF */}
+      {(() => {
+        const getRoomTypeForReceipt = (roomNum) => {
+          const target = roomsData.find(r => String(r.number).trim() === String(roomNum).trim() || String(r.number).trim().endsWith(String(roomNum).trim()));
+          return target?.type || 'Standard Double Bed';
+        };
 
-            <div id="printable-receipt" className="space-y-4 text-gray-800 dark:text-gray-100">
-              <div className="text-center border-b border-dashed border-gray-200 dark:border-gray-700 pb-4">
-                <h3 className="text-xl font-black tracking-tight text-blue-600">GARUDA KOSTEL</h3>
-                <p className="text-xs text-gray-400">Bukti Pembayaran / Sewa Kamar Resmi</p>
-              </div>
-
-              <div className="space-y-2 text-sm pt-2">
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Nama Penyewa:</span>
-                  <span className="font-bold">{selectedBookingForReceipt.tenantName || selectedBookingForReceipt.guestName}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Nomor Kamar:</span>
-                  <span className="font-bold">Kamar {selectedBookingForReceipt.roomNumber}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Tipe Sewa:</span>
-                  <span className="font-semibold">{selectedBookingForReceipt.rentType}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Check-In:</span>
-                  <span className="font-semibold text-xs">
-                    {new Date(selectedBookingForReceipt.startDate || selectedBookingForReceipt.checkInDate).toLocaleDateString('id-ID')} (14:00)
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-400">Check-Out:</span>
-                  <span className="font-semibold text-xs">
-                    {new Date(selectedBookingForReceipt.endDate || selectedBookingForReceipt.checkOutDate).toLocaleDateString('id-ID')} (12:00)
-                  </span>
-                </div>
-              </div>
-
-              <div className="border-t border-b border-gray-200 dark:border-gray-800 py-3 space-y-1.5 text-sm">
-                <div className="flex justify-between font-semibold">
-                  <span>Total Tagihan:</span>
-                  <span>{formatRupiah(selectedBookingForReceipt.totalAmount)}</span>
-                </div>
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>Bayar Tunai (Cash):</span>
-                  <span>{formatRupiah(selectedBookingForReceipt.paidCash)}</span>
-                </div>
-                <div className="flex justify-between text-xs text-gray-500">
-                  <span>Bayar Transfer:</span>
-                  <span>{formatRupiah(selectedBookingForReceipt.paidTransfer)}</span>
-                </div>
-                <div className="flex justify-between font-black text-base pt-2 text-blue-600 dark:text-blue-400">
-                  <span>Status:</span>
-                  <span>{selectedBookingForReceipt.status || selectedBookingForReceipt.paymentStatus}</span>
-                </div>
-              </div>
-
-              <div className="text-center text-[10px] text-gray-400 pt-2">
-                <p>Terima kasih telah mempercayakan akomodasi Anda di Garuda Kostel.</p>
-                <p>Dokumen ini sah dicetak secara digital oleh sistem.</p>
-              </div>
-            </div>
-
-            <div className="mt-6 flex gap-3 print:hidden">
-              <button
-                onClick={() => setIsReceiptModalOpen(false)}
-                className="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 text-gray-600 dark:text-gray-300 font-bold py-3 rounded-2xl text-sm transition-all duration-200 active:scale-95"
+        return isReceiptModalOpen && selectedBookingForReceipt && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="bg-white dark:bg-gray-900 w-full max-w-md rounded-3xl shadow-2xl p-6 md:p-8 relative border border-gray-100 dark:border-gray-800">
+              
+              <button 
+                onClick={() => setIsReceiptModalOpen(false)} 
+                className="absolute top-4 right-4 bg-gray-100 dark:bg-gray-800 text-gray-500 hover:text-gray-700 w-8 h-8 rounded-full flex items-center justify-center font-bold print:hidden transition-all duration-200 active:scale-90"
               >
-                Tutup
+                ✕
               </button>
-              <button
-                onClick={handlePrintReceipt}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-2xl text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all duration-200 active:scale-95"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                Cetak / Simpan PDF
-              </button>
-            </div>
 
+              <div id="printable-receipt" className="space-y-4 text-gray-800 dark:text-gray-100">
+                <div className="text-center border-b border-dashed border-gray-200 dark:border-gray-700 pb-4">
+                  <h3 className="text-xl font-black tracking-tight text-blue-600">GARUDA KOSTEL</h3>
+                  <p className="text-xs text-gray-400">Bukti Pembayaran / Sewa Kamar Resmi</p>
+                </div>
+
+                <div className="space-y-2 text-sm pt-2">
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Nama Penyewa:</span>
+                    <span className="font-bold">{selectedBookingForReceipt.tenantName || selectedBookingForReceipt.guestName}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Nomor Kamar:</span>
+                    <span className="font-bold">Kamar {selectedBookingForReceipt.roomNumber}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Tipe Kamar:</span>
+                    <span className="font-bold text-blue-600 dark:text-blue-400">{getRoomTypeForReceipt(selectedBookingForReceipt.roomNumber)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Tipe Sewa:</span>
+                    <span className="font-semibold">{selectedBookingForReceipt.rentType}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Check-In:</span>
+                    <span className="font-semibold text-xs">
+                      {new Date(selectedBookingForReceipt.startDate || selectedBookingForReceipt.checkInDate).toLocaleDateString('id-ID')} (14:00)
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-400">Check-Out:</span>
+                    <span className="font-semibold text-xs">
+                      {new Date(selectedBookingForReceipt.endDate || selectedBookingForReceipt.checkOutDate).toLocaleDateString('id-ID')} (12:00)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="border-t border-b border-gray-200 dark:border-gray-800 py-3 space-y-1.5 text-sm">
+                  <div className="flex justify-between font-semibold">
+                    <span>Total Tagihan:</span>
+                    <span>{formatRupiah(selectedBookingForReceipt.totalAmount)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Bayar Tunai (Cash):</span>
+                    <span>{formatRupiah(selectedBookingForReceipt.paidCash)}</span>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500">
+                    <span>Bayar Transfer:</span>
+                    <span>{formatRupiah(selectedBookingForReceipt.paidTransfer)}</span>
+                  </div>
+                  <div className="flex justify-between font-black text-base pt-2 text-blue-600 dark:text-blue-400">
+                    <span>Status:</span>
+                    <span>{selectedBookingForReceipt.status || selectedBookingForReceipt.paymentStatus}</span>
+                  </div>
+                </div>
+
+                <div className="text-center text-[10px] text-gray-400 pt-2">
+                  <p>Terima kasih telah mempercayakan akomodasi Anda di Garuda Kostel.</p>
+                  <p>Dokumen ini sah dicetak secara digital oleh sistem.</p>
+                </div>
+              </div>
+
+              <div className="mt-6 flex gap-3 print:hidden">
+                <button
+                  onClick={() => setIsReceiptModalOpen(false)}
+                  className="flex-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 text-gray-600 dark:text-gray-300 font-bold py-3 rounded-2xl text-sm transition-all duration-200 active:scale-95"
+                >
+                  Tutup
+                </button>
+                <button
+                  onClick={handlePrintReceipt}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-2xl text-sm shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2 transition-all duration-200 active:scale-95"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                  Cetak / Simpan PDF
+                </button>
+              </div>
+
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Modal Pop-up Konfirmasi Hapus */}
       {isDeleteModalOpen && bookingToDelete && (

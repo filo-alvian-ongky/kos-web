@@ -20,7 +20,7 @@ export async function POST(request) {
       data: {
         number: body.number,
         floor: body.floor,
-        type: body.type || "Kamar Standar", // Menyimpan kategori tipe kamar
+        type: body.type || "Standard Double Bed", // <-- Sudah disesuaikan ke default baru
         priceDaily: body.priceDaily ? Number(body.priceDaily) : null,
         priceMonthly: Number(body.priceMonthly),
         status: body.status,

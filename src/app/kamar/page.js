@@ -20,7 +20,7 @@ export default function KamarPublic() {
             // Mengelompokkan kamar berdasarkan Kategori Tipe
             const grouped = {};
             dataRooms.forEach(room => {
-              const typeName = room.type || 'Standard Room';
+              const typeName = room.type || 'Standard Double Bed';
               
               if (!grouped[typeName]) {
                 grouped[typeName] = {
@@ -48,11 +48,12 @@ export default function KamarPublic() {
               if (!grouped[typeName].photoUrl3 && room.photoUrl3) grouped[typeName].photoUrl3 = room.photoUrl3;
             });
 
-            // Urutkan agar Standard Room tampil lebih dulu jika ada
+            // LOGIKA PENGURUTAN (SORTING) BARU: Harga Termahal di Atas!
+            // Tujuannya agar "Family Room" jadi Hero Card (Bintang Utama) di paling atas
             const sortedTypes = Object.values(grouped).sort((a, b) => {
-              if (a.typeName.includes('Standard')) return -1;
-              if (b.typeName.includes('Standard')) return 1;
-              return 0;
+              const priceA = a.minPriceMonthly > 0 ? a.minPriceMonthly : (a.minPriceDaily * 30);
+              const priceB = b.minPriceMonthly > 0 ? b.minPriceMonthly : (b.minPriceDaily * 30);
+              return priceB - priceA; // Menurun (Descending)
             });
 
             setRoomTypes(sortedTypes);
@@ -80,8 +81,9 @@ export default function KamarPublic() {
           <div className="w-64 h-12 bg-gray-200 dark:bg-gray-800 rounded-2xl mb-4"></div>
           <div className="w-80 h-6 bg-gray-200 dark:bg-gray-800 rounded-xl mb-12"></div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
-            <div className="w-full h-[500px] bg-gray-200 dark:bg-gray-800 rounded-[3rem]"></div>
-            <div className="w-full h-[500px] bg-gray-200 dark:bg-gray-800 rounded-[3rem]"></div>
+            <div className="w-full h-[500px] bg-gray-200 dark:bg-gray-800 rounded-[3rem] lg:col-span-2"></div>
+            <div className="w-full h-[400px] bg-gray-200 dark:bg-gray-800 rounded-[3rem]"></div>
+            <div className="w-full h-[400px] bg-gray-200 dark:bg-gray-800 rounded-[3rem]"></div>
           </div>
         </div>
       </PublicWrapper>
@@ -100,15 +102,18 @@ export default function KamarPublic() {
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-gray-900 dark:text-white tracking-tight mb-4">
             Pilihan Tipe Kamar
           </h1>
-          <p className="text-gray-500 dark:text-gray-400 text-base md:text-lg max-w-2xl">
+          <p className="text-gray-500 dark:text-gray-400 text-base md:text-lg max-w-2xl mx-auto md:mx-0">
             Tingkatkan kualitas istirahat Anda. Pilih tipe kamar yang paling sesuai dengan kebutuhan ruang dan privasi Anda.
           </p>
         </motion.div>
 
-        {/* Grid Katalog Tipe Kamar (Diubah ke 2 Kolom Besar agar seperti pameran) */}
+        {/* Grid Katalog Tipe Kamar (Editorial Grand Showcase) */}
         {roomTypes.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
             {roomTypes.map((group, index) => {
+              // Menentukan apakah ini kartu pertama (Hero Card)
+              const isHero = index === 0;
+
               return (
                 <motion.div 
                   key={group.id} 
@@ -128,10 +133,16 @@ export default function KamarPublic() {
                       photoUrl3: group.photoUrl3
                     });
                   }}
-                  className="bg-white dark:bg-gray-800 rounded-[3rem] overflow-hidden border border-gray-100 dark:border-gray-700 flex flex-col cursor-pointer transition-all duration-500 hover:shadow-2xl hover:shadow-blue-900/5 hover:-translate-y-2 group"
+                  className={`bg-white dark:bg-gray-800 rounded-[3rem] overflow-hidden border border-gray-100 dark:border-gray-700 flex cursor-pointer transition-all duration-500 hover:shadow-2xl hover:shadow-blue-900/10 hover:-translate-y-2 group ${
+                    isHero 
+                      ? 'md:col-span-2 flex-col md:flex-row' // Hero Card: Lebar penuh, bentuk horizontal di desktop
+                      : 'md:col-span-1 flex-col' // Standard Card: Lebar 1 kolom, bentuk vertikal
+                  }`}
                 >
-                  {/* Area Foto Utama Besar */}
-                  <div className="relative h-64 md:h-80 bg-gray-200 dark:bg-gray-900 overflow-hidden">
+                  {/* Area Foto */}
+                  <div className={`relative bg-gray-200 dark:bg-gray-900 overflow-hidden ${
+                    isHero ? 'w-full md:w-3/5 h-72 md:h-auto md:min-h-[420px]' : 'w-full h-64 md:h-80'
+                  }`}>
                     {group.photoUrl ? (
                       <img src={group.photoUrl} alt={group.typeName} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"/>
                     ) : (
@@ -140,18 +151,30 @@ export default function KamarPublic() {
                         <span>Foto Segera Hadir</span>
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90"></div>
                     
-                    {/* Badge Tipe di Atas Foto */}
-                    <div className="absolute bottom-6 left-6 right-6">
-                      <h3 className="text-3xl md:text-4xl font-black text-white leading-tight shadow-sm drop-shadow-md">
+                    {/* Badge eksklusif untuk Hero Card */}
+                    {isHero && (
+                      <div className="absolute top-6 left-6 bg-black/50 backdrop-blur-md text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full border border-white/20 flex items-center gap-1.5 z-10">
+                        Most Popular
+                        <svg className="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                        </svg>
+                      </div>
+                    )}
+
+                    {/* Nama Tipe di Atas Foto */}
+                    <div className="absolute bottom-6 left-6 right-6 z-10">
+                      <h3 className={`${isHero ? 'text-4xl lg:text-5xl' : 'text-3xl lg:text-4xl'} font-black text-white leading-tight shadow-sm drop-shadow-md`}>
                         {group.typeName}
                       </h3>
                     </div>
                   </div>
                   
                   {/* Area Info & Fasilitas */}
-                  <div className="p-6 md:p-8 flex flex-col flex-grow bg-white dark:bg-gray-800">
+                  <div className={`p-6 md:p-8 flex flex-col justify-center bg-white dark:bg-gray-800 ${
+                    isHero ? 'w-full md:w-2/5' : 'w-full flex-grow'
+                  }`}>
                     
                     {/* Highlight Fasilitas Minimalis */}
                     <div className="mb-6">
@@ -162,9 +185,6 @@ export default function KamarPublic() {
                             ✓ {fasilitas}
                           </span>
                         ))}
-                        <span className="text-blue-500 dark:text-blue-400 text-xs font-bold px-2 py-1.5 flex items-center">
-                          + Fasilitas Lainnya
-                        </span>
                       </div>
                     </div>
 
@@ -172,23 +192,27 @@ export default function KamarPublic() {
                     <div className="w-full h-px bg-gray-100 dark:bg-gray-700 my-2 mb-6"></div>
 
                     {/* Harga & Tombol */}
-                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mt-auto">
+                    <div className={`flex flex-col ${isHero ? '' : 'xl:flex-row'} justify-between items-start ${isHero ? 'items-start' : 'xl:items-end'} gap-6 mt-auto`}>
                       <div>
                         <p className="text-gray-400 dark:text-gray-500 text-[10px] uppercase font-bold tracking-widest mb-1">Mulai Dari</p>
                         {group.minPriceMonthly > 0 ? (
                           <div className="flex items-end gap-1.5">
-                            <span className="text-3xl md:text-4xl font-black text-blue-600 dark:text-blue-400 leading-none">{formatRupiah(group.minPriceMonthly)}</span>
+                            <span className={`${isHero ? 'text-4xl' : 'text-3xl lg:text-4xl'} font-black text-blue-600 dark:text-blue-400 leading-none`}>{formatRupiah(group.minPriceMonthly)}</span>
                             <span className="text-sm text-gray-500 font-medium mb-1">/ bulan</span>
                           </div>
                         ) : (
                           <div className="flex items-end gap-1.5">
-                            <span className="text-3xl md:text-4xl font-black text-indigo-600 dark:text-indigo-400 leading-none">{formatRupiah(group.minPriceDaily)}</span>
+                            <span className={`${isHero ? 'text-4xl' : 'text-3xl lg:text-4xl'} font-black text-indigo-600 dark:text-indigo-400 leading-none`}>{formatRupiah(group.minPriceDaily)}</span>
                             <span className="text-sm text-gray-500 font-medium mb-1">/ hari</span>
                           </div>
                         )}
                       </div>
 
-                      <button className="w-full md:w-auto bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-bold py-3.5 px-6 rounded-2xl group-hover:bg-blue-600 dark:group-hover:bg-blue-500 group-hover:text-white transition-all duration-300">
+                      <button className={`w-full ${isHero ? '' : 'xl:w-auto'} font-bold py-3.5 px-6 rounded-2xl transition-all duration-300 ${
+                        isHero 
+                          ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30 group-hover:bg-blue-700' 
+                          : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 group-hover:bg-blue-600 dark:group-hover:bg-blue-500 group-hover:text-white'
+                      }`}>
                         Lihat Galeri Kamar
                       </button>
                     </div>

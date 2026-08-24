@@ -22,9 +22,9 @@ export default function AdminKamar() {
   const [roomToDelete, setRoomToDelete] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  // State Form Kamar
+  // State Form Kamar (Default diubah menjadi Standard Double Bed)
   const [newRoom, setNewRoom] = useState({
-    number: '', floor: '1', type: 'Standard Room', priceDaily: '', priceMonthly: '', status: 'Available', photoUrl: '', photoUrl2: '', photoUrl3: ''
+    number: '', floor: '1', type: 'Standard Double Bed', priceDaily: '', priceMonthly: '', status: 'Available', photoUrl: '', photoUrl2: '', photoUrl3: ''
   });
 
   const [selectedRooms, setSelectedRooms] = useState([]);
@@ -130,7 +130,7 @@ export default function AdminKamar() {
   const openAddModal = () => {
     setIsEditing(false);
     setEditId(null);
-    setNewRoom({ number: '', floor: '1', type: 'Standard Room', priceDaily: '', priceMonthly: '', status: 'Available', photoUrl: '', photoUrl2: '', photoUrl3: '' });
+    setNewRoom({ number: '', floor: '1', type: 'Standard Double Bed', priceDaily: '', priceMonthly: '', status: 'Available', photoUrl: '', photoUrl2: '', photoUrl3: '' });
     setShowModal(true);
   };
 
@@ -138,7 +138,7 @@ export default function AdminKamar() {
     setIsEditing(true);
     setEditId(room.id);
     setNewRoom({
-      number: room.number, floor: room.floor, type: room.type || 'Standard Room', priceDaily: room.priceDaily || '',
+      number: room.number, floor: room.floor, type: room.type || 'Standard Double Bed', priceDaily: room.priceDaily || '',
       priceMonthly: room.priceMonthly || '', status: room.status, photoUrl: room.photoUrl || '',
       photoUrl2: room.photoUrl2 || '', photoUrl3: room.photoUrl3 || ''
     });
@@ -303,11 +303,11 @@ export default function AdminKamar() {
 
   const formatRupiah = (number) => number ? "Rp " + number.toLocaleString('id-ID') : "-";
 
-  // Filter pencarian, status, dan kategori tipe kamar
+  // Filter pencarian, status, dan kategori tipe kamar (Diubah ke 3 tipe kamar)
   const filteredRooms = rooms.filter(r => {
     const matchSearch = r.number.toLowerCase().includes(searchTerm.toLowerCase());
     const matchStatus = filterStatus === 'All' || r.status === filterStatus;
-    const matchCategory = filterCategory === 'All' || (r.type || 'Standard Room') === filterCategory;
+    const matchCategory = filterCategory === 'All' || (r.type || 'Standard Double Bed') === filterCategory;
     return matchSearch && matchStatus && matchCategory;
   });
 
@@ -430,7 +430,8 @@ export default function AdminKamar() {
           {/* Sorting / Filter Kategori */}
           <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="w-full md:w-auto bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 p-2.5 rounded-xl font-medium outline-none cursor-pointer shadow-sm text-sm">
             <option value="All">Semua Kategori</option>
-            <option value="Standard Room">Standard Room</option>
+            <option value="Standard Double Bed">Standard Double Bed</option>
+            <option value="Standard Twin Bed">Standard Twin Bed</option>
             <option value="Family Room">Family Room</option>
           </select>
 
@@ -466,7 +467,7 @@ export default function AdminKamar() {
                   </div>
                   <div>
                     <div className="font-black text-3xl text-gray-800 dark:text-gray-100 leading-none">{room.number}</div>
-                    <div className="text-sm font-semibold text-gray-500 dark:text-gray-400 mt-1">Lantai {room.floor} • <span className="text-blue-600 dark:text-blue-400 font-bold">{room.type || 'Standard Room'}</span></div>
+                    <div className="text-sm font-semibold text-gray-500 dark:text-gray-400 mt-1">Lantai {room.floor} • <span className="text-blue-600 dark:text-blue-400 font-bold">{room.type || 'Standard Double Bed'}</span></div>
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 w-28">
@@ -543,7 +544,7 @@ export default function AdminKamar() {
                     <td className="p-5">
                       <div className="font-black text-2xl text-gray-800 dark:text-gray-100">{room.number}</div>
                       <div className="text-sm font-semibold text-gray-500 dark:text-gray-400 mt-1">Lantai {room.floor}</div>
-                      <div className="text-xs font-bold text-blue-600 dark:text-blue-400 mt-1 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-0.5 rounded-md inline-block">{room.type || 'Standard Room'}</div>
+                      <div className="text-xs font-bold text-blue-600 dark:text-blue-400 mt-1 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-0.5 rounded-md inline-block">{room.type || 'Standard Double Bed'}</div>
                     </td>
                     <td className="p-5">
                       <div className="text-sm font-bold text-blue-600 dark:text-blue-400 mb-1">
@@ -605,7 +606,8 @@ export default function AdminKamar() {
                 <div>
                   <label className="block text-[10px] md:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5 leading-tight">Kategori / Tipe Kamar</label>
                   <select value={newRoom.type} onChange={(e) => setNewRoom({...newRoom, type: e.target.value})} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-bold text-sm md:text-base cursor-pointer">
-                    <option value="Standard Room">Standard Room</option>
+                    <option value="Standard Double Bed">Standard Double Bed</option>
+                    <option value="Standard Twin Bed">Standard Twin Bed</option>
                     <option value="Family Room">Family Room</option>
                   </select>
                 </div>
@@ -651,7 +653,8 @@ export default function AdminKamar() {
                   <label className="block text-[10px] md:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5 leading-tight">Ubah Kategori / Tipe Kamar</label>
                   <select value={bulkData.type} onChange={(e) => setBulkData({...bulkData, type: e.target.value})} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 font-bold p-3 rounded-xl outline-none cursor-pointer text-sm">
                     <option value="">-- Jangan Ubah Tipe --</option>
-                    <option value="Standard Room">Standard Room</option>
+                    <option value="Standard Double Bed">Standard Double Bed</option>
+                    <option value="Standard Twin Bed">Standard Twin Bed</option>
                     <option value="Family Room">Family Room</option>
                   </select>
                 </div>

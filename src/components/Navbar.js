@@ -3,6 +3,34 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 
+// Vektor Logo Garuda Kostel (Hasil Tracing Presisi dari Brosur)
+const GarudaLogo = ({ className = "w-10 h-auto" }) => (
+  <svg viewBox="0 0 125 80" className={className} xmlns="http://www.w3.org/2000/svg">
+    <g>
+      {/* Sayap Kiri (Menyesuaikan dengan mode Light/Dark) */}
+      <path d="M40 32 C25 32 15 26 5 19 C15 29 25 36 40 37 Z" className="fill-gray-900 dark:fill-white" />
+      <path d="M40 44 C25 44 15 40 5 36 C15 44 25 48 40 49 Z" className="fill-gray-900 dark:fill-white" />
+      <path d="M40 56 C25 56 15 54 5 53 C15 59 25 60 40 61 Z" className="fill-gray-900 dark:fill-white" />
+      
+      {/* Sayap Kanan (Menyesuaikan dengan mode Light/Dark) */}
+      <path d="M85 32 C100 32 110 26 120 19 C110 29 100 36 85 37 Z" className="fill-gray-900 dark:fill-white" />
+      <path d="M85 44 C100 44 110 40 120 36 C110 44 100 48 85 49 Z" className="fill-gray-900 dark:fill-white" />
+      <path d="M85 56 C100 56 110 54 120 53 C110 59 100 60 85 61 Z" className="fill-gray-900 dark:fill-white" />
+      
+      {/* Atap & Cerobong (Abu-abu konsisten) */}
+      <rect x="73" y="12" width="6" height="12" className="fill-gray-500 dark:fill-gray-400" />
+      <path d="M 35 30 L 62.5 10 L 90 30 H 82 L 62.5 16 L 43 30 Z" className="fill-gray-500 dark:fill-gray-400" />
+      
+      {/* Kotak Merah & Huruf GK (Mengikuti palet asli) */}
+      <rect x="40" y="25" width="45" height="38" rx="6" className="fill-red-600 dark:fill-red-500" />
+      {/* Huruf G */}
+      <path d="M 46 33 H 56 V 37 H 50 V 51 H 58 V 45 H 54 V 41 H 62 V 55 H 46 Z" fill="#FFFFFF" />
+      {/* Huruf K */}
+      <path d="M 61 33 H 65 V 42 L 72 33 H 78 L 69 43 L 79 55 H 72 L 65 46 V 55 H 61 Z" fill="#FFFFFF" />
+    </g>
+  </svg>
+);
+
 export default function Navbar({ theme, toggleTheme }) {
   const pathname = usePathname();
   const [kosName, setKosName] = useState('Garuda Kostel');
@@ -75,10 +103,10 @@ export default function Navbar({ theme, toggleTheme }) {
         <div className="w-full bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 shadow-lg shadow-gray-200/50 dark:shadow-black/50 rounded-full px-6 py-3 flex items-center transition-all duration-300">
           
           <div className="flex-1 flex justify-start">
-            <Link href="/" className="flex items-center gap-2 active:scale-95 transition-transform">
-              <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-black text-sm uppercase shadow-sm">
-                {kosName.charAt(0)}
-              </div>
+            <Link href="/" className="flex items-center gap-3 active:scale-95 transition-transform">
+              {/* Logo Vektor Garuda Kostel */}
+              <GarudaLogo className="w-12 h-auto shrink-0 drop-shadow-sm" />
+              
               <span className="font-black text-lg tracking-tight text-gray-900 dark:text-white transition-all duration-300">
                 {kosName}
               </span>
@@ -174,11 +202,11 @@ export default function Navbar({ theme, toggleTheme }) {
       
       {/* Mobile Top Header */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-gradient-to-b from-[#f2f4f7] to-transparent dark:from-gray-950 z-40 px-6 py-4 flex justify-between items-center pointer-events-none">
-        <div className="flex items-center gap-2 pointer-events-auto">
-          <div className="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center text-white font-black text-xs uppercase shadow-md transition-all">
-            {kosName.charAt(0)}
-          </div>
-          <span className="font-black text-lg tracking-tight text-gray-900 dark:text-white drop-shadow-sm transition-all duration-300">
+        <div className="flex items-center gap-3 pointer-events-auto">
+          {/* Logo Vektor Garuda Kostel (Versi Mobile) */}
+          <GarudaLogo className="w-10 h-auto shrink-0 drop-shadow-sm" />
+          
+          <span className="font-black text-lg tracking-tight text-gray-900 dark:text-white drop-shadow-sm transition-all duration-300 mt-1">
             {kosName}
           </span>
         </div>
