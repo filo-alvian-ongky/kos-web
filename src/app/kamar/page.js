@@ -74,16 +74,50 @@ export default function KamarPublic() {
 
   const formatRupiah = (number) => number ? "Rp " + number.toLocaleString('id-ID') : "-";
 
+  // EFEK LOADING SKELETON TERBARU (Sesuai Layout Editorial Grand Showcase)
   if (isLoading) {
     return (
       <PublicWrapper>
-        <div className="max-w-7xl mx-auto px-6 pt-10 animate-pulse min-h-[100vh]">
-          <div className="w-64 h-12 bg-gray-200 dark:bg-gray-800 rounded-2xl mb-4"></div>
-          <div className="w-80 h-6 bg-gray-200 dark:bg-gray-800 rounded-xl mb-12"></div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
-            <div className="w-full h-[500px] bg-gray-200 dark:bg-gray-800 rounded-[3rem] lg:col-span-2"></div>
-            <div className="w-full h-[400px] bg-gray-200 dark:bg-gray-800 rounded-[3rem]"></div>
-            <div className="w-full h-[400px] bg-gray-200 dark:bg-gray-800 rounded-[3rem]"></div>
+        <div className="max-w-7xl mx-auto px-6 pt-10 animate-pulse min-h-[100vh] mb-32">
+          
+          {/* Skeleton Header */}
+          <div className="mb-12 md:mb-16 flex flex-col items-center md:items-start">
+            <div className="w-32 h-8 bg-gray-200 dark:bg-gray-800 rounded-full mb-4"></div>
+            <div className="w-64 md:w-96 h-12 md:h-16 bg-gray-200 dark:bg-gray-800 rounded-2xl mb-4"></div>
+            <div className="w-full max-w-2xl h-6 bg-gray-200 dark:bg-gray-800 rounded-xl"></div>
+          </div>
+          
+          {/* Skeleton Grid (Hero Card + 2 Standard Cards) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
+            
+            {/* Skeleton Hero Card (Membentang 2 Kolom) */}
+            <div className="md:col-span-2 bg-white dark:bg-gray-800 rounded-[3rem] border border-gray-100 dark:border-gray-700 flex flex-col md:flex-row overflow-hidden shadow-sm h-auto md:min-h-[420px]">
+              <div className="w-full md:w-3/5 h-72 md:h-auto bg-gray-200 dark:bg-gray-700"></div>
+              <div className="p-6 md:p-8 w-full md:w-2/5 flex flex-col justify-center">
+                <div className="w-3/4 h-10 bg-gray-200 dark:bg-gray-700 rounded-xl mb-4"></div>
+                <div className="w-full h-4 bg-gray-200 dark:bg-gray-700 rounded-md mb-2"></div>
+                <div className="w-5/6 h-4 bg-gray-200 dark:bg-gray-700 rounded-md mb-8"></div>
+                <div className="w-1/3 h-4 bg-gray-200 dark:bg-gray-700 rounded-md mb-2"></div>
+                <div className="w-1/2 h-8 bg-gray-200 dark:bg-gray-700 rounded-xl mb-8"></div>
+                <div className="w-full h-12 bg-gray-200 dark:bg-gray-700 rounded-2xl mt-auto"></div>
+              </div>
+            </div>
+
+            {/* Skeleton Standard Card 1 & 2 */}
+            {[1, 2].map(i => (
+              <div key={i} className="md:col-span-1 bg-white dark:bg-gray-800 rounded-[3rem] border border-gray-100 dark:border-gray-700 flex flex-col overflow-hidden shadow-sm">
+                <div className="w-full h-64 md:h-80 bg-gray-200 dark:bg-gray-700"></div>
+                <div className="p-6 md:p-8 flex flex-col flex-grow justify-center">
+                  <div className="w-2/3 h-8 bg-gray-200 dark:bg-gray-700 rounded-xl mb-4"></div>
+                  <div className="w-full h-4 bg-gray-200 dark:bg-gray-700 rounded-md mb-2"></div>
+                  <div className="w-4/5 h-4 bg-gray-200 dark:bg-gray-700 rounded-md mb-8"></div>
+                  <div className="w-1/3 h-4 bg-gray-200 dark:bg-gray-700 rounded-md mb-2"></div>
+                  <div className="w-1/2 h-8 bg-gray-200 dark:bg-gray-700 rounded-xl mb-8"></div>
+                  <div className="w-full h-12 bg-gray-200 dark:bg-gray-700 rounded-2xl mt-auto"></div>
+                </div>
+              </div>
+            ))}
+
           </div>
         </div>
       </PublicWrapper>

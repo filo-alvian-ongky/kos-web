@@ -1,9 +1,20 @@
 'use client';
+import { useState, useEffect } from 'react';
 import PublicWrapper from '../../components/publicWrapper';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 
 export default function Fasilitas() {
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulasi loading agar transisi antar halaman terasa konsisten dan premium
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 800); 
+    return () => clearTimeout(timer);
+  }, []);
+
   const roomFacilities = [
     {
       icon: (
@@ -125,6 +136,64 @@ export default function Fasilitas() {
       desc: 'Fasilitas untuk mencuci dan menjemur pakaian mandiri.'
     }
   ];
+
+  // EFEK SKELETON LOADER
+  if (isLoading) {
+    return (
+      <PublicWrapper>
+        <div className="max-w-7xl mx-auto px-6 pt-8 overflow-hidden animate-pulse mb-32">
+          
+          {/* Skeleton Header Fasilitas */}
+          <div className="flex flex-col items-center max-w-2xl mx-auto mb-16 md:mb-20 pt-8">
+            <div className="w-32 h-8 bg-gray-200 dark:bg-gray-800 rounded-full mb-4"></div>
+            <div className="w-3/4 md:w-full h-12 md:h-16 bg-gray-200 dark:bg-gray-800 rounded-2xl mb-4"></div>
+            <div className="w-5/6 h-5 bg-gray-200 dark:bg-gray-800 rounded-xl mb-2"></div>
+            <div className="w-2/3 h-5 bg-gray-200 dark:bg-gray-800 rounded-xl"></div>
+          </div>
+
+          {/* Skeleton Section 1 */}
+          <div className="mb-20">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-64 h-8 bg-gray-200 dark:bg-gray-800 rounded-xl"></div>
+              <div className="h-px bg-gray-200 dark:bg-gray-800 flex-grow"></div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white dark:bg-gray-800 p-8 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm">
+                  <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-2xl mb-6"></div>
+                  <div className="w-3/4 h-6 bg-gray-200 dark:bg-gray-700 rounded-xl mb-3"></div>
+                  <div className="w-full h-4 bg-gray-200 dark:bg-gray-700 rounded-md mb-2"></div>
+                  <div className="w-5/6 h-4 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Skeleton Section 2 */}
+          <div className="mb-20">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-64 h-8 bg-gray-200 dark:bg-gray-800 rounded-xl"></div>
+              <div className="h-px bg-gray-200 dark:bg-gray-800 flex-grow"></div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="bg-white dark:bg-gray-800 p-8 rounded-[2rem] border border-gray-100 dark:border-gray-700 shadow-sm">
+                  <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-2xl mb-6"></div>
+                  <div className="w-3/4 h-6 bg-gray-200 dark:bg-gray-700 rounded-xl mb-3"></div>
+                  <div className="w-full h-4 bg-gray-200 dark:bg-gray-700 rounded-md mb-2"></div>
+                  <div className="w-5/6 h-4 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Skeleton Banner CTA */}
+          <div className="bg-gray-200 dark:bg-gray-800 rounded-[2.5rem] h-64 md:h-80 mb-10"></div>
+          
+        </div>
+      </PublicWrapper>
+    );
+  }
 
   return (
     <PublicWrapper>
