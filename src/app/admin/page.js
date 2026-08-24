@@ -3,6 +3,32 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+// Komponen Vektor Logo Garuda
+const GarudaLogo = ({ className = "w-12 h-auto" }) => (
+  <svg viewBox="0 0 125 80" className={className} xmlns="http://www.w3.org/2000/svg">
+    <g>
+      {/* Sayap Kiri */}
+      <path d="M40 32 C25 32 15 26 5 19 C15 29 25 36 40 37 Z" className="fill-gray-900 dark:fill-white" />
+      <path d="M40 44 C25 44 15 40 5 36 C15 44 25 48 40 49 Z" className="fill-gray-900 dark:fill-white" />
+      <path d="M40 56 C25 56 15 54 5 53 C15 59 25 60 40 61 Z" className="fill-gray-900 dark:fill-white" />
+      
+      {/* Sayap Kanan */}
+      <path d="M85 32 C100 32 110 26 120 19 C110 29 100 36 85 37 Z" className="fill-gray-900 dark:fill-white" />
+      <path d="M85 44 C100 44 110 40 120 36 C110 44 100 48 85 49 Z" className="fill-gray-900 dark:fill-white" />
+      <path d="M85 56 C100 56 110 54 120 53 C110 59 100 60 85 61 Z" className="fill-gray-900 dark:fill-white" />
+      
+      {/* Atap & Cerobong */}
+      <rect x="73" y="12" width="6" height="12" className="fill-gray-500 dark:fill-gray-400" />
+      <path d="M 35 30 L 62.5 10 L 90 30 H 82 L 62.5 16 L 43 30 Z" className="fill-gray-500 dark:fill-gray-400" />
+      
+      {/* Kotak Merah & Huruf GK */}
+      <rect x="40" y="25" width="45" height="38" rx="6" className="fill-red-600 dark:fill-red-500" />
+      <path d="M 46 33 H 56 V 37 H 50 V 51 H 58 V 45 H 54 V 41 H 62 V 55 H 46 Z" fill="#FFFFFF" />
+      <path d="M 61 33 H 65 V 42 L 72 33 H 78 L 69 43 L 79 55 H 72 L 65 46 V 55 H 61 Z" fill="#FFFFFF" />
+    </g>
+  </svg>
+);
+
 export default function AdminAuth() {
   const [isLoginMode, setIsLoginMode] = useState(true);
   
@@ -60,7 +86,6 @@ export default function AdminAuth() {
           const formattedName = username.charAt(0).toUpperCase() + username.slice(1);
           localStorage.setItem('adminName', formattedName);
           
-          // Menggunakan window.location.href untuk mengatasi masalah stuck router.push
           window.location.href = '/admin/dashboard';
         } else {
           setErrorMsg(data.error || 'Username atau password salah!');
@@ -126,8 +151,9 @@ export default function AdminAuth() {
       <div className="w-full max-w-md mx-auto my-auto py-8">
         <div className="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-[2.5rem] shadow-sm border border-gray-100 dark:border-gray-700 transition-colors duration-300">
           
-          <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 flex items-center justify-center text-3xl mb-6 mx-auto shadow-inner">
-            {isLoginMode ? '🔐' : '🛡️'}
+          {/* Logo Garuda menggantikan emoji */}
+          <div className="w-20 h-20 rounded-2xl bg-gray-50 dark:bg-gray-900/60 flex items-center justify-center mb-6 mx-auto shadow-inner border border-gray-100 dark:border-gray-800 p-2">
+            <GarudaLogo className="w-14 h-auto" />
           </div>
 
           <h1 className="text-3xl font-black text-center text-gray-900 dark:text-white mb-2 tracking-tight">
@@ -137,17 +163,14 @@ export default function AdminAuth() {
             {isLoginMode ? 'Masuk untuk mengelola operasional Garuda Kostel' : 'Pendaftaran khusus dengan Kode Rahasia'}
           </p>
 
-          {/* Toggle Tab Login / Register dengan Animasi Geser */}
+          {/* Toggle Tab Login / Register */}
           <div className="relative flex bg-gray-100 dark:bg-gray-900 p-1 rounded-2xl mb-6 overflow-hidden">
-            
-            {/* Pil Background Bergeser */}
             <div 
               className={`absolute top-1 bottom-1 w-[calc(50%-0.25rem)] bg-white dark:bg-gray-800 rounded-xl shadow-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${
                 isLoginMode ? 'left-1' : 'left-1/2'
               }`}
             ></div>
 
-            {/* Tombol Masuk */}
             <button
               type="button"
               onClick={() => { setIsLoginMode(true); setErrorMsg(''); setSuccessMsg(''); }}
@@ -158,7 +181,6 @@ export default function AdminAuth() {
               Masuk
             </button>
 
-            {/* Tombol Daftar Baru */}
             <button
               type="button"
               onClick={() => { setIsLoginMode(false); setErrorMsg(''); setSuccessMsg(''); }}
@@ -194,7 +216,6 @@ export default function AdminAuth() {
               />
             </div>
 
-            {/* Input Password dengan Vektor Mata SVG */}
             <div>
               <label className="block text-[10px] md:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Password</label>
               <div className="relative">
@@ -225,7 +246,6 @@ export default function AdminAuth() {
               </div>
             </div>
 
-            {/* Input Kode Rahasia (Hanya saat mode Register) */}
             <div className={`transition-all duration-300 ease-in-out origin-top ${!isLoginMode ? 'opacity-100 max-h-32 mt-4' : 'opacity-0 max-h-0 m-0 overflow-hidden pointer-events-none'}`}>
               <label className="block text-[10px] md:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Kode Rahasia Admin</label>
               <div className="relative">

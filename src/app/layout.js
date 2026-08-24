@@ -4,6 +4,7 @@ import PersistentLayout from '../components/PersistentLayout';
 export const metadata = {
   title: 'Garuda Kostel',
   description: 'Kenyamanan Kost, Fasilitas Setara Hotel.',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({ children }) {
