@@ -2,7 +2,7 @@
   "name": "Garuda Kostel Admin",
   "short_name": "GarudaAdmin",
   "description": "Sistem Manajemen Operasional Garuda Kostel",
-  "start_url": "/admin/login",
+  "start_url": "/admin",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
