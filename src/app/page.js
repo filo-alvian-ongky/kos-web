@@ -6,7 +6,7 @@ import PublicWrapper from '../components/publicWrapper';
 
 export default function Home() {
   const [content, setContent] = useState(null);
-  const [featuredRooms, setFeaturedRooms] = useState([]);
+  const [roomTypes, setRoomTypes] = useState([]); 
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -22,7 +22,31 @@ export default function Home() {
         if (resRooms.ok) {
           const dataRooms = await resRooms.json();
           if (Array.isArray(dataRooms)) {
-            setFeaturedRooms(dataRooms.filter(r => r.status === 'Available').slice(0, 3));
+            // Mengelompokkan kamar berdasarkan Tipe untuk ditampilkan secara publik (Tanpa status ketersediaan)
+            const grouped = {};
+            dataRooms.forEach(room => {
+              // Jika tipe tidak ada, default ke Standard Room
+              const typeName = room.type || 'Standard Room';
+              
+              if (!grouped[typeName]) {
+                grouped[typeName] = {
+                  typeName,
+                  minPriceMonthly: room.priceMonthly || 0,
+                  minPriceDaily: room.priceDaily || 0,
+                  photoUrl: room.photoUrl || ''
+                };
+              }
+              // Cari harga termurah untuk ditampilkan sebagai "Mulai dari"
+              if (room.priceMonthly > 0 && (grouped[typeName].minPriceMonthly === 0 || room.priceMonthly < grouped[typeName].minPriceMonthly)) {
+                grouped[typeName].minPriceMonthly = room.priceMonthly;
+              }
+              if (room.priceDaily > 0 && (grouped[typeName].minPriceDaily === 0 || room.priceDaily < grouped[typeName].minPriceDaily)) {
+                grouped[typeName].minPriceDaily = room.priceDaily;
+              }
+            });
+
+            // Ubah object menjadi array agar bisa di-map
+            setRoomTypes(Object.values(grouped));
           }
         }
       } catch (error) {
@@ -40,16 +64,13 @@ export default function Home() {
   const heroSubtitle = content?.heroSubtitle || `Nikmati pengalaman menginap eksklusif di ${kosName}. Bersih, aman, dan berlokasi strategis.`;
 
   // Kumpulan Data SVG Ikon Fasilitas
-const fasilitasIcons = [
+  const fasilitasIcons = [
     {
       label: 'Full AC',
       icon: (
         <svg className="w-8 h-8 text-blue-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          {/* Bentuk mesin AC */}
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 8.25A2.25 2.25 0 015.25 6h13.5A2.25 2.25 0 0121 8.25v2.25A2.25 2.25 0 0118.75 12.75H5.25A2.25 2.25 0 013 10.5V8.25z" />
-          {/* Hembusan angin sejuk */}
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M7.5 16.5v1.5M12 16.5v2.25M16.5 16.5v1.5" />
-          {/* Lampu indikator LED */}
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.5 9.5h.01" />
         </svg>
       )
@@ -66,9 +87,7 @@ const fasilitasIcons = [
       label: 'K. Mandi Dalam',
       icon: (
         <svg className="w-8 h-8 text-blue-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          {/* Pipa dan Kepala Shower */}
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 2v4M8 10h8a2 2 0 00-2-4h-4a2 2 0 00-2 4z" />
-          {/* Tetesan Air Mengalir */}
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 2v4M8 10h8a2 2 0 00-2-4h-4a2 2 0 00-2 2z" />
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9 13v2m0 2v3M12 14v2m0 2v3M15 13v2m0 2v3" />
         </svg>
       )
@@ -77,9 +96,7 @@ const fasilitasIcons = [
       label: 'Layanan Bersih',
       icon: (
         <svg className="w-8 h-8 text-blue-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          {/* Sapu di sebelah kiri */}
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 4v8M5 12h6l-1 7H6l-1-7z" />
-          {/* Serok (Dustpan) di sebelah kanan */}
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17 7v6M14 13h6l1 6h-8l1-6z" />
         </svg>
       )
@@ -100,11 +117,9 @@ const fasilitasIcons = [
 
   return (
     <PublicWrapper>
-      {/* HERO SECTION - Menggunakan Grid 2 Kolom */}
+      {/* HERO SECTION */}
       <section className="max-w-7xl mx-auto px-6 mb-20 md:mb-32 overflow-hidden pt-4 md:pt-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          
-          {/* Kolom Kiri: Teks & Tombol */}
           <motion.div 
             initial={{ opacity: 0, x: -40 }}
             animate={{ opacity: 1, x: 0 }}
@@ -123,7 +138,7 @@ const fasilitasIcons = [
             </p>
             <div className="flex flex-wrap gap-4">
               <Link href="/kamar" className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-full shadow-xl shadow-blue-500/30 transition-all active:scale-95">
-                Lihat Kamar Tersedia
+                Lihat Pilihan Kamar
               </Link>
               <Link href="/lokasi" className="bg-white dark:bg-gray-800 text-gray-800 dark:text-white border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 font-bold py-4 px-8 rounded-full shadow-sm transition-all active:scale-95">
                 Cek Lokasi
@@ -131,7 +146,6 @@ const fasilitasIcons = [
             </div>
           </motion.div>
 
-          {/* Kolom Kanan: Foto Bangunan */}
           <motion.div
             initial={{ opacity: 0, x: 40 }}
             animate={{ opacity: 1, x: 0 }}
@@ -145,7 +159,6 @@ const fasilitasIcons = [
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
           </motion.div>
-          
         </div>
       </section>
 
@@ -187,7 +200,7 @@ const fasilitasIcons = [
         </motion.div>
       </section>
 
-      {/* PREVIEW KAMAR */}
+      {/* PREVIEW KELOMPOK TIPE KAMAR (TANPA STATUS KETERSEDIAAN) */}
       <section className="max-w-7xl mx-auto px-6 overflow-hidden mb-24">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
@@ -195,48 +208,49 @@ const fasilitasIcons = [
           viewport={{ once: true }}
           className="flex justify-between items-end mb-8"
         >
-          <h2 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white">Kamar Tersedia</h2>
+          <div>
+            <h2 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white">Pilihan Tipe Kamar</h2>
+            <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Katalog kategori dan fasilitas kamar</p>
+          </div>
           <Link href="/kamar" className="hidden md:flex text-blue-600 dark:text-blue-400 font-bold items-center gap-2 hover:bg-blue-50 dark:hover:bg-blue-900/30 px-5 py-2.5 rounded-full transition-all active:scale-95">
-            Lihat Semua <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"></path></svg>
+            Lihat Detail <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7"></path></svg>
           </Link>
         </motion.div>
 
-        {featuredRooms.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredRooms.map((room, index) => (
+        {roomTypes.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {roomTypes.map((group, index) => (
               <motion.div 
-                key={room.id}
+                key={index}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ delay: index * 0.15, duration: 0.5, ease: "easeOut" }}
-                className="bg-white dark:bg-gray-800 rounded-[2.5rem] overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700 group flex flex-col"
+                className="bg-white dark:bg-gray-800 rounded-[2.5rem] overflow-hidden shadow-sm border border-gray-100 dark:border-gray-700 group flex flex-col sm:flex-row"
               >
-                <div className="relative h-56 md:h-64 bg-gray-200 dark:bg-gray-700 overflow-hidden">
-                  {room.photoUrl ? (
-                    <img src={room.photoUrl} alt={`Kamar ${room.number}`} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/>
+                <div className="relative w-full sm:w-1/2 h-56 sm:h-auto bg-gray-200 dark:bg-gray-700 overflow-hidden">
+                  {group.photoUrl ? (
+                    <img src={group.photoUrl} alt={group.typeName} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"/>
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold">Tanpa Foto</div>
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 font-bold">Foto Tipe Kamar</div>
                   )}
-                  <div className="absolute top-4 right-4 bg-emerald-500 text-white text-xs font-black px-3 py-1.5 rounded-full shadow-lg">TERSEDIA</div>
                 </div>
                 
-                <div className="p-6 md:p-8 flex flex-col flex-grow justify-between">
+                <div className="p-6 sm:p-8 flex flex-col flex-grow justify-between sm:w-1/2">
                   <div>
-                    <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-1">Kamar {room.number}</h3>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-6">Lantai {room.floor}</p>
+                    <h3 className="text-2xl font-black text-gray-900 dark:text-white mb-2">{group.typeName}</h3>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">Fasilitas eksklusif lengkap dengan AC & kamar mandi dalam.</p>
                     <div className="space-y-1 mb-6">
-                      <p className="text-gray-500 dark:text-gray-400 text-[10px] uppercase font-bold tracking-wider">Mulai dari</p>
+                      <p className="text-gray-400 text-[10px] uppercase font-bold tracking-wider">Mulai dari</p>
                       
-                      {/* LOGIKA HARGA CERDAS BERDASARKAN BULANAN/HARIAN */}
-                      {room.priceMonthly > 0 ? (
+                      {group.minPriceMonthly > 0 ? (
                         <div className="flex items-end gap-2">
-                          <span className="text-2xl md:text-3xl font-black text-blue-600 dark:text-blue-400">{formatRupiah(room.priceMonthly)}</span>
+                          <span className="text-2xl font-black text-blue-600 dark:text-blue-400">{formatRupiah(group.minPriceMonthly)}</span>
                           <span className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">/ bulan</span>
                         </div>
                       ) : (
                         <div className="flex items-end gap-2">
-                          <span className="text-2xl md:text-3xl font-black text-indigo-600 dark:text-indigo-400">{formatRupiah(room.priceDaily)}</span>
+                          <span className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{formatRupiah(group.minPriceDaily)}</span>
                           <span className="text-sm text-gray-500 dark:text-gray-400 font-medium mb-1">/ hari</span>
                         </div>
                       )}
@@ -250,11 +264,8 @@ const fasilitasIcons = [
           </div>
         ) : (
           <div className="bg-white dark:bg-gray-800 rounded-[2.5rem] p-12 text-center border border-gray-100 dark:border-gray-700">
-            <svg className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-            </svg>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Belum ada kamar tersedia</h3>
-            <p className="text-gray-500 dark:text-gray-400 text-sm">Semua kamar sedang penuh saat ini.</p>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Belum ada tipe kamar terdaftar</h3>
+            <p className="text-gray-500 dark:text-gray-400 text-sm">Silakan cek kembali secara berkala.</p>
           </div>
         )}
       </section>

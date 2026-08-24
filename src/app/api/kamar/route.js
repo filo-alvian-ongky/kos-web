@@ -20,7 +20,7 @@ export async function POST(request) {
       data: {
         number: body.number,
         floor: body.floor,
-        // Menyimpan dua jenis harga
+        type: body.type || "Kamar Standar", // Menyimpan kategori tipe kamar
         priceDaily: body.priceDaily ? Number(body.priceDaily) : null,
         priceMonthly: Number(body.priceMonthly),
         status: body.status,
@@ -42,13 +42,11 @@ export async function PUT(request) {
     
     const updateData = {};
     
-    // PERBAIKAN: Izinkan backend menerima update nomor dan lantai
     if (body.number) updateData.number = body.number;
     if (body.floor) updateData.floor = body.floor;
-    
+    if (body.type !== undefined) updateData.type = body.type; // Update kategori jika ada perubahan
     if (body.status) updateData.status = body.status;
     
-    // Update harga jika ada perubahan
     if (body.priceDaily !== undefined) {
       updateData.priceDaily = body.priceDaily ? Number(body.priceDaily) : null;
     }
@@ -67,7 +65,6 @@ export async function PUT(request) {
     return NextResponse.json(updatedRoom);
   } catch (error) {
     console.log("ERROR PUT:", error);
-    // Jika error karena nomor kamar ganda, Prisma akan melempar error P2002
     if (error.code === 'P2002') {
       return NextResponse.json({ error: "Nomor kamar sudah terpakai di lantai ini" }, { status: 400 });
     }

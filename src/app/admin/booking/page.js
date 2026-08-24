@@ -91,13 +91,13 @@ export default function AdminBooking() {
         setBookings(dataBookings);
         setRoomsData(dataRooms);
 
-        // LOGIKA OTOMATIS CHECK-OUT: Cek apakah ada kamar yang tanggal check-out nya sudah lewat
-        const todayStr = new Date().toISOString().split('T')[0];
+        const today = new Date();
 
         for (const booking of dataBookings) {
-          const checkOutDateStr = new Date(booking.endDate || booking.checkOutDate).toISOString().split('T')[0];
+          // LOGIKA OTOMATIS CHECK-OUT (Menggunakan patokan Jam 12.00)
+          const checkOutDate = new Date(booking.endDate || booking.checkOutDate);
           
-          if (checkOutDateStr < todayStr) {
+          if (today >= checkOutDate) {
             const roomNum = String(booking.roomNumber).trim();
             const targetRoom = dataRooms.find(r => String(r.number).trim() === roomNum || String(r.number).trim().endsWith(roomNum));
 
@@ -130,21 +130,24 @@ export default function AdminBooking() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    let newValue = value;
-
-    let updatedForm = { ...formData, [name]: newValue };
+    let updatedForm = { ...formData, [name]: value };
 
     if (name === 'checkInDate' || name === 'rentType') {
-      const currentRentType = name === 'rentType' ? newValue : updatedForm.rentType;
-      const currentCheckIn = name === 'checkInDate' ? newValue : updatedForm.checkInDate;
+      const currentRentType = name === 'rentType' ? value : updatedForm.rentType;
+      const currentCheckIn = name === 'checkInDate' ? value : updatedForm.checkInDate;
+      
       if (currentCheckIn) {
-        const inDate = new Date(currentCheckIn);
+        // Asumsikan Check-in jam 14:00 (Format waktu lokal)
+        const inDate = new Date(`${currentCheckIn}T14:00:00`);
+        
         if (currentRentType === 'Bulanan') {
+          // Tambah 1 Bulan
           inDate.setMonth(inDate.getMonth() + 1);
+          // Set otomatis menjadi jam 12.00 WIB untuk Check-out
           updatedForm.checkOutDate = inDate.toISOString().split('T')[0];
         } else if (currentRentType === 'Harian' && updatedForm.checkOutDate) {
-          const outDate = new Date(updatedForm.checkOutDate);
-          if (outDate <= new Date(currentCheckIn)) {
+          const outDate = new Date(`${updatedForm.checkOutDate}T12:00:00`);
+          if (outDate <= inDate) {
             inDate.setDate(inDate.getDate() + 1);
             updatedForm.checkOutDate = inDate.toISOString().split('T')[0];
           }
@@ -156,7 +159,7 @@ export default function AdminBooking() {
 
   let minCheckOut = "";
   if (formData.checkInDate) {
-    const inDate = new Date(formData.checkInDate);
+    const inDate = new Date(`${formData.checkInDate}T14:00:00`);
     inDate.setDate(inDate.getDate() + (formData.rentType === 'Bulanan' ? 30 : 1)); 
     minCheckOut = inDate.toISOString().split('T')[0];
   }
@@ -185,10 +188,8 @@ export default function AdminBooking() {
     let dataToDownload = bookings;
 
     if (csvStartDate && csvEndDate) {
-      const start = new Date(csvStartDate);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(csvEndDate);
-      end.setHours(23, 59, 59, 999);
+      const start = new Date(`${csvStartDate}T00:00:00`);
+      const end = new Date(`${csvEndDate}T23:59:59`);
 
       dataToDownload = bookings.filter(b => {
         const bStart = new Date(b.startDate || b.checkInDate);
@@ -207,8 +208,8 @@ export default function AdminBooking() {
     const headers = ['No. Kamar', 'Nama Penyewa', 'Tipe Sewa', 'Total Harga', 'Bayar Cash', 'Bayar TF', 'Status Pembayaran', 'Tanggal Masuk', 'Tanggal Keluar', 'Catatan'];
     const csvRows = dataToDownload.map(b => [
       b.roomNumber, b.tenantName || b.guestName, b.rentType, b.totalAmount || 0, b.paidCash || 0, b.paidTransfer || 0, b.status || b.paymentStatus,
-      new Date(b.startDate || b.checkInDate).toLocaleDateString('id-ID'),
-      new Date(b.endDate || b.checkOutDate).toLocaleDateString('id-ID'),
+      new Date(b.startDate || b.checkInDate).toLocaleDateString('id-ID', { hour: '2-digit', minute: '2-digit' }),
+      new Date(b.endDate || b.checkOutDate).toLocaleDateString('id-ID', { hour: '2-digit', minute: '2-digit' }),
       b.notes ? b.notes.replace(/,/g, ' ') : '' 
     ].map(field => `"${field}"`).join(','));
 
@@ -258,7 +259,6 @@ export default function AdminBooking() {
     e.preventDefault();
     const inputRoomNumber = formData.roomNumber.trim();
     
-    // Validasi pencocokan dengan data kamar master (mendukung pencocokan nomor kamar murni)
     const targetRoom = roomsData.find(r => {
       const roomNumStr = String(r.number).trim();
       return roomNumStr.toUpperCase() === inputRoomNumber.toUpperCase() || roomNumStr.endsWith(inputRoomNumber);
@@ -279,13 +279,16 @@ export default function AdminBooking() {
       return; 
     }
 
-    // Menggunakan inputan murni admin (misal: 101, 201) untuk disimpan ke database booking
     const finalRoomNumber = inputRoomNumber;
-
     const total = parseFloat(formData.totalAmount) || 0;
     const cash = parseFloat(formData.paidCash) || 0;
     const transfer = parseFloat(formData.paidTransfer) || 0;
     const computedStatus = (cash + transfer) >= total ? 'Lunas' : 'Belum Lunas';
+
+    // PENYISIPAN JAM CHECK-IN (14:00) DAN CHECK-OUT (12:00)
+    // Supaya API menerima format ISO yang lengkap dengan jamnya
+    const finalCheckInDateTime = new Date(`${formData.checkInDate}T14:00:00+07:00`).toISOString();
+    const finalCheckOutDateTime = new Date(`${formData.checkOutDate}T12:00:00+07:00`).toISOString();
 
     const payload = {
       ...formData,
@@ -293,7 +296,9 @@ export default function AdminBooking() {
       totalAmount: total,
       paidCash: cash,
       paidTransfer: transfer,
-      paymentStatus: computedStatus
+      paymentStatus: computedStatus,
+      checkInDate: finalCheckInDateTime,
+      checkOutDate: finalCheckOutDateTime,
     };
 
     const method = isEditing ? 'PUT' : 'POST';
@@ -303,10 +308,10 @@ export default function AdminBooking() {
       
       if (res.ok) {
         if (!isEditing) {
-          const todayStr = new Date().toISOString().split('T')[0];
-          const checkInStr = formData.checkInDate; 
+          const today = new Date();
+          const checkInDate = new Date(`${formData.checkInDate}T14:00:00+07:00`); 
           
-          const newRoomStatus = checkInStr <= todayStr ? 'Not Available' : 'Booked';
+          const newRoomStatus = checkInDate <= today ? 'Not Available' : 'Booked';
 
           await fetch('/api/kamar', {
             method: 'PUT',
@@ -580,8 +585,14 @@ export default function AdminBooking() {
                 </div>
 
                 <div className="flex justify-between text-xs font-medium text-gray-600 dark:text-gray-400 mb-4 bg-gray-50 dark:bg-gray-900/50 p-2.5 rounded-xl">
-                  <div><span className="block text-gray-400 text-[10px] uppercase">Masuk</span>{new Date(booking.startDate || booking.checkInDate).toLocaleDateString('id-ID')}</div>
-                  <div className="text-right"><span className="block text-gray-400 text-[10px] uppercase">Keluar</span>{new Date(booking.endDate || booking.checkOutDate).toLocaleDateString('id-ID')}</div>
+                  <div>
+                    <span className="block text-gray-400 text-[10px] uppercase">Masuk (14:00)</span>
+                    {new Date(booking.startDate || booking.checkInDate).toLocaleDateString('id-ID')}
+                  </div>
+                  <div className="text-right">
+                    <span className="block text-gray-400 text-[10px] uppercase">Keluar (12:00)</span>
+                    {new Date(booking.endDate || booking.checkOutDate).toLocaleDateString('id-ID')}
+                  </div>
                 </div>
 
                 {/* Tombol Aksi Ikon Vector (Mobile) */}
@@ -648,8 +659,8 @@ export default function AdminBooking() {
                         )}
                       </td>
                       <td className="p-5">
-                        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">Masuk: <span className="font-normal text-gray-500">{new Date(booking.startDate || booking.checkInDate).toLocaleDateString('id-ID')}</span></div>
-                        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-1">Keluar: <span className="font-normal text-gray-500">{new Date(booking.endDate || booking.checkOutDate).toLocaleDateString('id-ID')}</span></div>
+                        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300">Masuk (14:00): <span className="font-normal text-gray-500 block">{new Date(booking.startDate || booking.checkInDate).toLocaleDateString('id-ID')}</span></div>
+                        <div className="text-sm font-semibold text-gray-700 dark:text-gray-300 mt-1">Keluar (12:00): <span className="font-normal text-gray-500 block">{new Date(booking.endDate || booking.checkOutDate).toLocaleDateString('id-ID')}</span></div>
                       </td>
                       <td className="p-5 text-center">
                         {/* Tombol Aksi Ikon Vector (Desktop) */}
@@ -769,11 +780,11 @@ export default function AdminBooking() {
 
                 <div className="grid grid-cols-2 gap-3 md:gap-4 items-end">
                   <div>
-                    <label className="block text-[10px] md:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Check-In</label>
+                    <label className="block text-[10px] md:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Check-In (Tercatat 14:00)</label>
                     <input type="date" name="checkInDate" required value={formData.checkInDate} onChange={handleInputChange} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-medium text-sm md:text-base [color-scheme:light] dark:[color-scheme:dark]"/>
                   </div>
                   <div>
-                    <label className="block text-[10px] md:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Check-Out</label>
+                    <label className="block text-[10px] md:text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1.5">Check-Out (Tercatat 12:00)</label>
                     <input type="date" name="checkOutDate" required min={minCheckOut} value={formData.checkOutDate} onChange={handleInputChange} className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white p-3 rounded-xl md:rounded-2xl focus:ring-2 focus:ring-blue-500 outline-none font-medium text-sm md:text-base [color-scheme:light] dark:[color-scheme:dark]"/>
                   </div>
                 </div>
@@ -826,9 +837,15 @@ export default function AdminBooking() {
                   <span className="font-semibold">{selectedBookingForReceipt.rentType}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-400">Periode:</span>
+                  <span className="text-gray-400">Check-In:</span>
                   <span className="font-semibold text-xs">
-                    {new Date(selectedBookingForReceipt.startDate || selectedBookingForReceipt.checkInDate).toLocaleDateString('id-ID')} s/d {new Date(selectedBookingForReceipt.endDate || selectedBookingForReceipt.checkOutDate).toLocaleDateString('id-ID')}
+                    {new Date(selectedBookingForReceipt.startDate || selectedBookingForReceipt.checkInDate).toLocaleDateString('id-ID')} (14:00)
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Check-Out:</span>
+                  <span className="font-semibold text-xs">
+                    {new Date(selectedBookingForReceipt.endDate || selectedBookingForReceipt.checkOutDate).toLocaleDateString('id-ID')} (12:00)
                   </span>
                 </div>
               </div>
